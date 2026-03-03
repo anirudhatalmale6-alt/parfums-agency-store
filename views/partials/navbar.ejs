@@ -1,0 +1,28 @@
+<nav class="navbar<%= typeof scrolled !== 'undefined' && scrolled ? ' scrolled' : '' %>">
+  <div class="container">
+    <div class="navbar__inner">
+      <div class="navbar__brand">
+        <a href="/" style="display: flex; align-items: center; gap: 10px;">
+          <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+            <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+          <% } else { %>
+            <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+            <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+          <% } %>
+        </a>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="/search" style="font-size: 18px; color: inherit; text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('search') %>">🔍</a>
+        <a href="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'javascript:void(0)' : '/cart' %>" id="cartLink" onclick="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'openCartDrawer();return false;' : '' %>" style="position: relative; font-size: 20px; color: inherit; text-decoration: none; opacity: 0.8;" title="<%= t('cart') %>">🛒<span id="cartBadge" style="position: absolute; top: -8px; right: -8px; background: var(--color-error); color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 50%; display: <%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'flex' : 'none' %>; align-items: center; justify-content: center;"><%= (typeof cartCount !== 'undefined' && cartCount > 0) ? cartCount : '0' %></span></a>
+        <% if (typeof product !== 'undefined' && product) { %>
+          <a href="/product/<%= product.slug %>/checkout" class="navbar__cta">🛒 <%= t('order_now') %></a>
+        <% } else { %>
+          <a href="/" class="navbar__cta">🏠 <%= t('home') %></a>
+        <% } %>
+        <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
+        <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: inherit; padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</nav>

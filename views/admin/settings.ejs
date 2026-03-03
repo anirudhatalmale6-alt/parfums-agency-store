@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الاعدادات — لوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Cairo', sans-serif; background: #f5f1ed; direction: rtl; text-align: right; min-height: 100vh; }
+        .admin-wrapper { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: #6B5335; color: #fff; position: fixed; top: 0; right: 0; bottom: 0; z-index: 100; display: flex; flex-direction: column; transition: transform 0.3s; overflow-y: auto; }
+        .sidebar-header { padding: 28px 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-header h2 { font-size: 20px; font-weight: 700; }
+        .sidebar-header p { font-size: 12px; opacity: 0.6; margin-top: 2px; }
+        .sidebar-nav { list-style: none; padding: 16px 0; flex: 1; }
+        .sidebar-nav li a { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: rgba(255,255,255,0.75); text-decoration: none; font-size: 15px; font-weight: 600; transition: all 0.2s; }
+        .sidebar-nav li a:hover, .sidebar-nav li a.active { background: rgba(255,255,255,0.1); color: #fff; }
+        .sidebar-nav li a.active { border-left: 3px solid #fff; }
+        .sidebar-nav li a svg { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
+        .sidebar-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 8px 24px; }
+        .sidebar-footer { padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .sidebar-footer a { display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.6); text-decoration: none; font-size: 14px; font-weight: 600; transition: color 0.2s; }
+        .sidebar-footer a:hover { color: #fff; }
+        .sidebar-footer a svg { width: 20px; height: 20px; fill: currentColor; }
+        .main-content { flex: 1; margin-right: 260px; padding: 32px; }
+        .page-title { font-size: 26px; font-weight: 700; color: #6B5335; margin-bottom: 28px; }
+        .btn { display: inline-block; padding: 10px 24px; border: none; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; transition: opacity 0.2s; }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #8B6F47; color: #fff; }
+        .form-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); padding: 32px; max-width: 600px; margin-bottom: 28px; }
+        .form-card h3 { font-size: 18px; color: #6B5335; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0ebe5; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 700; color: #555; margin-bottom: 8px; }
+        .form-group input[type="text"], .form-group input[type="email"], .form-group input[type="password"] {
+            width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px;
+            font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; transition: border-color 0.2s;
+        }
+        .form-group input:focus { outline: none; border-color: #8B6F47; }
+        .form-group .hint { font-size: 12px; color: #aaa; margin-top: 6px; }
+        .alert { padding: 14px 20px; border-radius: 10px; margin-bottom: 24px; font-size: 14px; font-weight: 600; max-width: 600px; }
+        .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
+        .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+        .mobile-toggle { display: none; position: fixed; top: 16px; right: 16px; z-index: 200; background: #6B5335; color: #fff; border: none; border-radius: 10px; width: 44px; height: 44px; font-size: 20px; cursor: pointer; }
+        .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 90; }
+        @media (max-width: 768px) {
+            .mobile-toggle { display: block; }
+            .sidebar { transform: translateX(100%); }
+            .sidebar.open { transform: translateX(0); }
+            .sidebar-overlay.open { display: block; }
+            .main-content { margin-right: 0; padding: 24px 16px; padding-top: 72px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="mobile-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open'); document.querySelector('.sidebar-overlay').classList.toggle('open');">&#9776;</button>
+    <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open'); this.classList.remove('open');"></div>
+
+    <div class="admin-wrapper">
+        <aside class="sidebar">
+            <div class="sidebar-header"><h2>لوحة التحكم</h2><p>ادارة المتجر</p></div>
+            <ul class="sidebar-nav">
+                <li><a href="/admin"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>الرئيسية</a></li>
+                <li><a href="/admin/products"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z"/></svg>المنتجات</a></li>
+                <li><a href="/admin/orders"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg>الطلبات</a></li>
+                <li><a href="/admin/reviews"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>التعليقات</a></li>
+                <div class="sidebar-divider"></div>
+                <li><a href="/admin/categories"><svg viewBox="0 0 24 24"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg>التصنيفات</a></li>
+                <li><a href="/admin/collections"><svg viewBox="0 0 24 24"><path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12zM10 9h8v2h-8zm0 3h4v2h-4zm0-6h8v2h-8z"/></svg>المجموعات</a></li>
+                <li><a href="/admin/landing-pages"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>صفحات الهبوط</a></li>
+                <li><a href="/admin/pages"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 15.01V17h1.99l5.88-5.88-1.99-1.99L8 15.01zm7.87-7.87l1.99 1.99.86-.86c.39-.39.39-1.02 0-1.41l-.59-.59c-.39-.39-1.02-.39-1.41 0l-.85.87z"/></svg>الصفحات</a></li>
+                <li><a href="/admin/banners"><svg viewBox="0 0 24 24"><path d="M19 5H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 12H5V7h14v10zM6 13h2v2H6zm0-4h12v2H6zm4 4h8v2h-8z"/></svg>البانرات</a></li>
+                <li><a href="/admin/gifts"><svg viewBox="0 0 24 24"><path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z"/></svg>الهدايا</a></li>
+                <div class="sidebar-divider"></div>
+                <li><a href="/admin/users"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>المسوقين</a></li>
+                <li><a href="/admin/withdrawals"><svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>طلبات السحب</a></li>
+                <div class="sidebar-divider"></div>
+                <li><a href="/admin/settings/bank"><svg viewBox="0 0 24 24"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"/></svg>التحويل البنكي</a></li>
+                <li><a href="/admin/settings" class="active"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>الاعدادات</a></li>
+            </ul>
+            <div class="sidebar-footer"><a href="/admin/logout"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>تسجيل الخروج</a></div>
+        </aside>
+
+        <main class="main-content">
+            <h1 class="page-title">الاعدادات</h1>
+
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success"><%= success %></div>
+            <% } %>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-error"><%= error %></div>
+            <% } %>
+
+            <!-- Logo Settings -->
+            <div class="form-card">
+                <h3>لوجو الموقع</h3>
+                <form method="POST" action="/admin/settings/logo" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>لوجو سطح المكتب (مطلوب)</label>
+                        <input type="file" name="desktop_logo" accept="image/*" style="width: 100%; padding: 10px; border: 2px solid #e8e0d8; border-radius: 10px; font-size: 14px;" required>
+                        <% if (settings.desktop_logo) { %>
+                            <div style="margin-top: 12px;">
+                                <img src="/uploads/settings/<%= settings.desktop_logo %>" alt="Desktop Logo" style="max-width: 200px; max-height: 60px; border-radius: 8px; border: 1px solid #e8e0d8;">
+                                <div style="font-size: 12px; color: #2e7d32; margin-top: 6px;">اللوجو الحالي: <%= settings.desktop_logo %></div>
+                            </div>
+                        <% } %>
+                    </div>
+                    <div class="form-group">
+                        <label>لوجو الموبايل (اختياري)</label>
+                        <input type="file" name="mobile_logo" accept="image/*" style="width: 100%; padding: 10px; border: 2px solid #e8e0d8; border-radius: 10px; font-size: 14px;">
+                        <div class="hint">اختياري — يستخدم في الشاشات الصغيرة. إذا لم يُرفع يُستخدم لوجو سطح المكتب</div>
+                        <% if (settings.mobile_logo) { %>
+                            <div style="margin-top: 12px;">
+                                <img src="/uploads/settings/<%= settings.mobile_logo %>" alt="Mobile Logo" style="max-width: 120px; max-height: 40px; border-radius: 8px; border: 1px solid #e8e0d8;">
+                                <div style="font-size: 12px; color: #2e7d32; margin-top: 6px;">لوجو الموبايل الحالي: <%= settings.mobile_logo %></div>
+                            </div>
+                        <% } %>
+                    </div>
+                    <button type="submit" class="btn btn-primary">رفع اللوجو</button>
+                </form>
+            </div>
+
+            <!-- Site Settings -->
+            <div class="form-card">
+                <h3>اعدادات الموقع</h3>
+                <form method="POST" action="/admin/settings/site">
+                    <div class="form-group">
+                        <label>اسم الموقع</label>
+                        <input type="text" name="site_name" value="<%= settings.site_name || '' %>" placeholder="اسم المتجر">
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </form>
+            </div>
+
+            <!-- Language Settings -->
+            <div class="form-card">
+                <h3>لغة المتجر</h3>
+                <form method="POST" action="/admin/settings/language">
+                    <div class="form-group">
+                        <label>اللغة</label>
+                        <% var currentLang = (typeof settings !== 'undefined' && settings.site_language) ? settings.site_language : 'ar'; %>
+                        <select name="site_language" style="width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; background: #fff; cursor: pointer;">
+                            <option value="ar" <%= currentLang === 'ar' ? 'selected' : '' %>>العربية فقط (RTL)</option>
+                            <option value="fr" <%= currentLang === 'fr' ? 'selected' : '' %>>الفرنسية فقط (LTR)</option>
+                            <option value="both" <%= currentLang === 'both' ? 'selected' : '' %>>العربية + الفرنسية (مع زر التبديل)</option>
+                        </select>
+                        <div class="hint">عند اختيار "العربية + الفرنسية" يظهر زر تبديل اللغة في أسفل الصفحة</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ اللغة</button>
+                </form>
+            </div>
+
+            <!-- Cart Mode -->
+            <div class="form-card">
+                <h3>وضع السلة</h3>
+                <form method="POST" action="/admin/settings/cart-mode">
+                    <div class="form-group">
+                        <label>نوع السلة</label>
+                        <% var currentCartMode = (typeof settings !== 'undefined' && settings.cart_mode) ? settings.cart_mode : 'drawer'; %>
+                        <select name="cart_mode" style="width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; background: #fff; cursor: pointer;">
+                            <option value="drawer" <%= currentCartMode === 'drawer' ? 'selected' : '' %>>سلة جانبية (Drawer)</option>
+                            <option value="redirect" <%= currentCartMode === 'redirect' ? 'selected' : '' %>>صفحة كاملة (Redirect)</option>
+                            <option value="disabled" <%= currentCartMode === 'disabled' ? 'selected' : '' %>>معطلة</option>
+                        </select>
+                        <div class="hint">Drawer: سلة جانبية تفتح كنافذة منبثقة — Redirect: ينتقل لصفحة السلة الكاملة</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </form>
+            </div>
+
+            <!-- Checkout Description -->
+            <div class="form-card">
+                <h3>وصف صفحة الدفع</h3>
+                <form method="POST" action="/admin/settings/checkout-description">
+                    <div class="form-group">
+                        <label>نص يظهر أعلى صفحة الدفع (يقبل HTML)</label>
+                        <textarea name="checkout_description" rows="4" style="width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; resize: vertical;" placeholder="مثال: توصيل مجاني للطلبات فوق 300 درهم..." dir="auto"><%= settings.checkout_description || '' %></textarea>
+                        <div class="hint">يظهر في أعلى نموذج الدفع — اتركه فارغاً لإخفائه. يقبل HTML.</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </form>
+            </div>
+
+            <!-- SEO Settings -->
+            <div class="form-card">
+                <h3>SEO — محركات البحث</h3>
+                <form method="POST" action="/admin/settings/seo">
+                    <div class="form-group">
+                        <label>عنوان الصفحة الرئيسية (Meta Title)</label>
+                        <input type="text" name="meta_title" value="<%= settings.meta_title || '' %>" placeholder="مثال: متجر الإلكترونيات الفاخرة" dir="auto">
+                        <div class="hint">يظهر في تبويب المتصفح ونتائج Google (50-60 حرف مثالي)</div>
+                    </div>
+                    <div class="form-group">
+                        <label>وصف الصفحة الرئيسية (Meta Description)</label>
+                        <textarea name="meta_description" rows="3" style="width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; resize: vertical;" placeholder="وصف مختصر يظهر في نتائج البحث..." dir="auto"><%= settings.meta_description || '' %></textarea>
+                        <div class="hint">يظهر أسفل العنوان في نتائج Google (120-160 حرف مثالي)</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ SEO</button>
+                </form>
+            </div>
+
+            <!-- OG Image (Social Sharing) -->
+            <div class="form-card">
+                <h3>صورة المشاركة (OG Image)</h3>
+                <form method="POST" action="/admin/settings/og-image" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>صورة المشاركة على فيسبوك / واتساب / تيك توك</label>
+                        <input type="file" name="og_image" accept="image/*" style="width: 100%; padding: 10px; border: 2px solid #e8e0d8; border-radius: 10px; font-size: 14px;">
+                        <div class="hint">الحجم المثالي: 1200×630 بكسل — تظهر عند مشاركة الرابط</div>
+                        <% if (settings.og_image) { %>
+                            <div style="margin-top: 12px;">
+                                <img src="/uploads/settings/<%= settings.og_image %>" alt="OG Image" style="max-width: 300px; border-radius: 10px; border: 1px solid #e8e0d8;">
+                                <div style="font-size: 12px; color: #2e7d32; margin-top: 6px;">الصورة الحالية: <%= settings.og_image %></div>
+                            </div>
+                        <% } %>
+                    </div>
+                    <button type="submit" class="btn btn-primary">رفع الصورة</button>
+                </form>
+            </div>
+
+            <!-- Favicon -->
+            <div class="form-card">
+                <h3>أيقونة المتجر (Favicon)</h3>
+                <form method="POST" action="/admin/settings/favicon" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label>أيقونة تبويب المتصفح</label>
+                        <input type="file" name="favicon" accept="image/png,image/x-icon,image/ico,image/svg+xml,.ico,.png,.svg" style="width: 100%; padding: 10px; border: 2px solid #e8e0d8; border-radius: 10px; font-size: 14px;">
+                        <div class="hint">PNG أو ICO — الحجم المثالي: 32×32 أو 64×64 بكسل</div>
+                        <% if (settings.favicon) { %>
+                            <div style="margin-top: 12px; display: flex; align-items: center; gap: 12px;">
+                                <img src="/uploads/settings/<%= settings.favicon %>" alt="Favicon" style="width: 32px; height: 32px; border-radius: 4px; border: 1px solid #e8e0d8;">
+                                <span style="font-size: 12px; color: #2e7d32;">الأيقونة الحالية</span>
+                            </div>
+                        <% } %>
+                    </div>
+                    <button type="submit" class="btn btn-primary">رفع الأيقونة</button>
+                </form>
+            </div>
+
+            <!-- Tracking Pixels -->
+            <div class="form-card">
+                <h3>التتبع والتحليلات</h3>
+                <form method="POST" action="/admin/settings/tracking">
+                    <div class="form-group">
+                        <label>Google Analytics ID</label>
+                        <input type="text" name="ga_id" value="<%= settings.ga_id || '' %>" placeholder="G-XXXXXXXXXX" dir="ltr" style="text-align:left;">
+                        <div class="hint">معرف Google Analytics 4 — مثال: G-ABC123DEF4</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Facebook / Meta Pixel ID</label>
+                        <input type="text" name="fb_pixel_id" value="<%= settings.fb_pixel_id || '' %>" placeholder="123456789012345" dir="ltr" style="text-align:left;">
+                    </div>
+                    <div class="form-group">
+                        <label>TikTok Pixel ID</label>
+                        <input type="text" name="tiktok_pixel_id" value="<%= settings.tiktok_pixel_id || '' %>" placeholder="CXXXXXXXXXXXXXXXXX" dir="ltr" style="text-align:left;">
+                    </div>
+                    <div class="form-group">
+                        <label>أكواد مخصصة (Custom Meta/Script Tags)</label>
+                        <textarea name="custom_meta_tags" rows="5" style="width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: monospace; font-size: 13px; color: #333; resize: vertical; direction: ltr; text-align: left;" placeholder="<meta name=&quot;...&quot; content=&quot;...&quot;>&#10;<script>...</script>"><%= settings.custom_meta_tags || '' %></textarea>
+                        <div class="hint">أكواد إضافية تُحقن في &lt;head&gt; — مثل أكواد التحقق أو تتبع إضافي</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ التتبع</button>
+                </form>
+            </div>
+
+            <!-- Typography Settings -->
+            <div class="form-card">
+                <h3>الخطوط</h3>
+                <form method="POST" action="/admin/settings/typography">
+                    <div class="form-group">
+                        <label>نوع الخط</label>
+                        <select name="font_family" style="width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; background: #fff; cursor: pointer;">
+                            <% var currentFont = (typeof settings !== 'undefined' && settings.font_family) ? settings.font_family : 'Cairo'; %>
+                            <option value="Cairo" <%= currentFont === 'Cairo' ? 'selected' : '' %>>Cairo</option>
+                            <option value="Tajawal" <%= currentFont === 'Tajawal' ? 'selected' : '' %>>Tajawal</option>
+                            <option value="Amiri" <%= currentFont === 'Amiri' ? 'selected' : '' %>>Amiri</option>
+                            <option value="Roboto" <%= currentFont === 'Roboto' ? 'selected' : '' %>>Roboto</option>
+                            <option value="Poppins" <%= currentFont === 'Poppins' ? 'selected' : '' %>>Poppins</option>
+                            <option value="Open Sans" <%= currentFont === 'Open Sans' ? 'selected' : '' %>>Open Sans</option>
+                            <option value="Arial" <%= currentFont === 'Arial' ? 'selected' : '' %>>Arial</option>
+                            <option value="Noto Sans Arabic" <%= currentFont === 'Noto Sans Arabic' ? 'selected' : '' %>>Noto Sans Arabic</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>رابط خط مخصص من Google Fonts (اختياري)</label>
+                        <input type="text" name="custom_font_url" value="<%= (typeof settings !== 'undefined' && settings.custom_font_url) ? settings.custom_font_url : '' %>" placeholder="https://fonts.googleapis.com/css2?family=..." dir="ltr" style="text-align:left;">
+                        <div class="hint">إذا أدخلت رابط خط مخصص سيتم استخدامه بدل الخط المحدد أعلاه</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">حفظ الخط</button>
+                </form>
+            </div>
+
+            <!-- Theme / Design Settings -->
+            <div class="form-card" style="max-width: 700px;">
+                <h3>🎨 تصميم الموقع — Theme / Design Settings</h3>
+                <form method="POST" action="/admin/settings/theme">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <!-- Primary Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>اللون الأساسي (Primary)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="primary_color" id="tc_primary" value="<%= settings.primary_color || '#000000' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_primary').value=this.value; updatePreview()">
+                                <input type="text" id="tt_primary" name="primary_color_text" value="<%= settings.primary_color || '#000000' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_primary').value=this.value; updatePreview()">
+                            </div>
+                            <div class="hint">أزرار، روابط، عناصر مميزة</div>
+                        </div>
+                        <!-- Secondary Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>اللون الثانوي (Secondary)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="secondary_color" id="tc_secondary" value="<%= settings.secondary_color || '#333333' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_secondary').value=this.value; updatePreview()">
+                                <input type="text" id="tt_secondary" value="<%= settings.secondary_color || '#333333' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_secondary').value=this.value; updatePreview()">
+                            </div>
+                            <div class="hint">عناصر ثانوية، ظلال</div>
+                        </div>
+                        <!-- Button Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>لون الأزرار (Buttons)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="button_color" id="tc_button" value="<%= settings.button_color || '#000000' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_button').value=this.value; updatePreview()">
+                                <input type="text" id="tt_button" value="<%= settings.button_color || '#000000' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_button').value=this.value; updatePreview()">
+                            </div>
+                            <div class="hint">خلفية أزرار الشراء والإجراءات</div>
+                        </div>
+                        <!-- Button Text Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>لون نص الأزرار (Button Text)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="button_text_color" id="tc_btntext" value="<%= settings.button_text_color || '#FFFFFF' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_btntext').value=this.value; updatePreview()">
+                                <input type="text" id="tt_btntext" value="<%= settings.button_text_color || '#FFFFFF' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_btntext').value=this.value; updatePreview()">
+                            </div>
+                            <div class="hint">لون الكتابة داخل الأزرار</div>
+                        </div>
+                        <!-- Text Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>لون النصوص (Text)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="text_color" id="tc_text" value="<%= settings.text_color || '#2C1810' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_text').value=this.value; updatePreview()">
+                                <input type="text" id="tt_text" value="<%= settings.text_color || '#2C1810' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_text').value=this.value; updatePreview()">
+                            </div>
+                            <div class="hint">لون النصوص الرئيسية في الموقع</div>
+                        </div>
+                        <!-- Background Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>لون الخلفية (Background)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="bg_color" id="tc_bg" value="<%= settings.bg_color || '#FFFFFF' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_bg').value=this.value; updatePreview()">
+                                <input type="text" id="tt_bg" value="<%= settings.bg_color || '#FFFFFF' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_bg').value=this.value; updatePreview()">
+                            </div>
+                            <div class="hint">خلفية الصفحة الكاملة</div>
+                        </div>
+                        <!-- Header BG -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>خلفية الـ Header</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="header_bg_color" id="tc_headerbg" value="<%= settings.header_bg_color || '#FFFFFF' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_headerbg').value=this.value; updatePreview()">
+                                <input type="text" id="tt_headerbg" value="<%= settings.header_bg_color || '#FFFFFF' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_headerbg').value=this.value; updatePreview()">
+                            </div>
+                        </div>
+                        <!-- Header Text -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>نص الـ Header</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="header_text_color" id="tc_headertxt" value="<%= settings.header_text_color || '#000000' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_headertxt').value=this.value; updatePreview()">
+                                <input type="text" id="tt_headertxt" value="<%= settings.header_text_color || '#000000' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_headertxt').value=this.value; updatePreview()">
+                            </div>
+                        </div>
+                        <!-- Footer BG -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>خلفية الـ Footer</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="footer_bg_color" id="tc_footerbg" value="<%= settings.footer_bg_color || '#1a1a1a' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_footerbg').value=this.value; updatePreview()">
+                                <input type="text" id="tt_footerbg" value="<%= settings.footer_bg_color || '#1a1a1a' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_footerbg').value=this.value; updatePreview()">
+                            </div>
+                        </div>
+                        <!-- Footer Text -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>نص الـ Footer</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="footer_text_color" id="tc_footertxt" value="<%= settings.footer_text_color || '#FFFFFF' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_footertxt').value=this.value; updatePreview()">
+                                <input type="text" id="tt_footertxt" value="<%= settings.footer_text_color || '#FFFFFF' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_footertxt').value=this.value; updatePreview()">
+                            </div>
+                        </div>
+                        <!-- Slider Arrow Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>لون أسهم السلايدر</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="slider_arrow_color" id="tc_arrowcolor" value="<%= settings.slider_arrow_color || '#333333' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;">
+                                <input type="text" id="tt_arrowcolor" value="<%= settings.slider_arrow_color || '#333333' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_arrowcolor').value=this.value">
+                            </div>
+                        </div>
+                        <!-- Slider Arrow Background -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>خلفية أسهم السلايدر</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="slider_arrow_bg_color" id="tc_arrowbg" value="<%= (settings.slider_arrow_bg_color || 'rgba(255,255,255,0.9)').indexOf('rgba') === -1 ? (settings.slider_arrow_bg_color || '#FFFFFF') : '#FFFFFF' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;">
+                                <input type="text" id="tt_arrowbg" name="slider_arrow_bg_color_text" value="<%= settings.slider_arrow_bg_color || 'rgba(255,255,255,0.9)' %>" style="width: 160px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" placeholder="rgba(255,255,255,0.9)">
+                            </div>
+                            <small style="color: #888; font-size: 11px;">يمكنك استخدام rgba للشفافية مثل: rgba(255,255,255,0.8)</small>
+                        </div>
+                    </div>
+
+                    <!-- Live Preview -->
+                    <div style="margin-top: 24px; border: 2px solid #e8e0d8; border-radius: 12px; overflow: hidden;" id="themePreview">
+                        <div id="prev_header" style="padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; background: <%= settings.header_bg_color || '#FFFFFF' %>; color: <%= settings.header_text_color || '#000000' %>;">
+                            <span style="font-weight: 700; font-size: 16px;">المتجر</span>
+                            <span style="font-size: 14px;">🛒 السلة</span>
+                        </div>
+                        <div id="prev_body" style="padding: 20px; background: <%= settings.bg_color || '#FFFFFF' %>; color: <%= settings.text_color || '#2C1810' %>;">
+                            <p style="font-size: 14px; margin-bottom: 12px;">هذا نص تجريبي لمعاينة ألوان الموقع الجديدة.</p>
+                            <div style="display: flex; gap: 8px;">
+                                <span id="prev_btn" style="display: inline-block; padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; background: <%= settings.button_color || '#000000' %>; color: <%= settings.button_text_color || '#FFFFFF' %>;">اشتري الآن</span>
+                                <span id="prev_price" style="padding: 8px 0; font-size: 15px; font-weight: 800; color: <%= settings.primary_color || '#000000' %>;">199 د.م</span>
+                            </div>
+                        </div>
+                        <div id="prev_footer" style="padding: 10px 20px; text-align: center; font-size: 12px; background: <%= settings.footer_bg_color || '#1a1a1a' %>; color: <%= settings.footer_text_color || '#FFFFFF' %>;">
+                            جميع الحقوق محفوظة © 2024
+                        </div>
+                    </div>
+                    <div class="hint" style="margin-top: 8px;">👆 معاينة مباشرة — التغييرات تُحفظ عند الضغط على "حفظ التصميم"</div>
+
+                    <div style="margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">حفظ التصميم</button>
+                    </div>
+                </form>
+            </div>
+
+            <script>
+                function updatePreview() {
+                    var ph = document.getElementById('prev_header');
+                    var pb = document.getElementById('prev_body');
+                    var pf = document.getElementById('prev_footer');
+                    var btn = document.getElementById('prev_btn');
+                    var price = document.getElementById('prev_price');
+                    ph.style.background = document.getElementById('tc_headerbg').value;
+                    ph.style.color = document.getElementById('tc_headertxt').value;
+                    pb.style.background = document.getElementById('tc_bg').value;
+                    pb.style.color = document.getElementById('tc_text').value;
+                    btn.style.background = document.getElementById('tc_button').value;
+                    btn.style.color = document.getElementById('tc_btntext').value;
+                    price.style.color = document.getElementById('tc_primary').value;
+                    pf.style.background = document.getElementById('tc_footerbg').value;
+                    pf.style.color = document.getElementById('tc_footertxt').value;
+                }
+            </script>
+
+            <!-- Profile Settings -->
+            <div class="form-card">
+                <h3>بيانات المدير</h3>
+                <form method="POST" action="/admin/settings/profile">
+                    <div class="form-group">
+                        <label>البريد الالكتروني</label>
+                        <input type="email" name="email" value="<%= admin.email || '' %>" placeholder="admin@example.com" dir="ltr" style="text-align:left;">
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور الحالية</label>
+                        <input type="password" name="current_password" placeholder="مطلوبة لتغيير كلمة المرور">
+                        <div class="hint">مطلوبة فقط عند تغيير كلمة المرور</div>
+                    </div>
+                    <div class="form-group">
+                        <label>كلمة المرور الجديدة</label>
+                        <input type="password" name="new_password" placeholder="اتركها فارغة اذا لم تريد التغيير">
+                    </div>
+                    <button type="submit" class="btn btn-primary">تحديث البيانات</button>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

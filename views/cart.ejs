@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%= t('shopping_cart') %> — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner">
+        <div class="navbar__brand">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="/search" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('search') %>">🔍</a>
+          <a href="/" class="navbar__cta"><%= t('home') %></a>
+          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
+          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Cart Page -->
+  <section class="hero" style="padding-bottom: 80px;">
+    <div class="container">
+      <div class="section-header" style="margin-top: 20px;">
+        <span class="section-header__label"><%= t('shopping_cart') %></span>
+        <h1 class="section-header__title"><%= t('your_cart') %></h1>
+        <div class="section-header__divider"></div>
+      </div>
+
+      <% if (items && items.length > 0) { %>
+      <div style="max-width: 900px; margin: 0 auto;">
+        <!-- Cart Items -->
+        <% items.forEach(function(item) { %>
+        <div class="cart-item" data-item-id="<%= item.id %>" style="
+          background: var(--color-card); border-radius: var(--radius-lg); padding: 20px;
+          margin-bottom: 16px; box-shadow: var(--shadow-sm);
+          display: flex; gap: 16px; align-items: flex-start; flex-wrap: wrap;
+        ">
+          <!-- Product Image -->
+          <div style="flex-shrink: 0; width: 100px; height: 100px; border-radius: var(--radius-md); overflow: hidden; background: var(--color-bg-warm);">
+            <% if (item.main_image) { %>
+              <img src="/uploads/products/<%= item.main_image %>" alt="<%= item.title %>" style="width: 100%; height: 100%; object-fit: cover;">
+            <% } else { %>
+              <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 36px;">🛍️</div>
+            <% } %>
+          </div>
+
+          <!-- Product Details -->
+          <div style="flex: 1; min-width: 200px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--color-text); margin-bottom: 6px;">
+              <a href="/product/<%= item.slug %>" style="color: inherit;"><%= item.title %></a>
+            </h3>
+
+            <!-- Variation Info -->
+            <% if (item.size_label) { %>
+              <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px;">
+                <%= t('variations_size') %>: <strong><%= item.size_label %></strong>
+              </div>
+            <% } %>
+            <% if (item.color_label) { %>
+              <div style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 4px;">
+                <%= t('variations_color') %>: <strong><%= item.color_label %></strong>
+              </div>
+            <% } %>
+
+            <!-- Unit Price -->
+            <div style="font-size: 15px; font-weight: 700; color: var(--color-primary); margin-bottom: 8px;">
+              <%= item.unit_price %> <%= t('currency') %>
+            </div>
+
+            <!-- Quantity Control -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button type="button" onclick="updateCartQty(<%= item.id %>, -1)" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-card); cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center;">−</button>
+              <span id="qty-<%= item.id %>" style="font-size: 16px; font-weight: 700; min-width: 24px; text-align: center;"><%= item.quantity %></span>
+              <button type="button" onclick="updateCartQty(<%= item.id %>, 1)" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--color-border); background: var(--color-card); cursor: pointer; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center;">+</button>
+              <button type="button" onclick="removeCartItem(<%= item.id %>)" style="
+                background: none; border: none; color: var(--color-error); cursor: pointer;
+                font-size: 14px; font-weight: 600; padding: 4px 8px;
+              "><%= t('remove') %></button>
+            </div>
+          </div>
+
+          <!-- Item Subtotal -->
+          <div style="text-align: left; min-width: 100px;">
+            <div style="font-size: 18px; font-weight: 800; color: var(--color-primary);">
+              <span id="item-total-<%= item.id %>"><%= item.subtotal %></span> <%= t('currency') %>
+            </div>
+          </div>
+        </div>
+        <% }); %>
+
+        <!-- Gift Product -->
+        <% if (typeof giftProduct !== 'undefined' && giftProduct) { %>
+        <div id="giftCard" style="
+          background: linear-gradient(135deg, #FFF8E1, #FFF3E0); border-radius: var(--radius-lg); padding: 20px;
+          margin-bottom: 16px; box-shadow: var(--shadow-sm); border: 2px dashed var(--color-accent);
+          cursor: pointer; transition: box-shadow 0.3s;
+        " onclick="toggleGiftDetails()">
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <div style="flex-shrink: 0; width: 80px; height: 80px; border-radius: var(--radius-md); overflow: hidden;">
+              <% if (giftProduct.image_filename) { %>
+                <img src="/uploads/gifts/<%= giftProduct.image_filename %>" alt="<%= giftProduct.name %>" style="width: 100%; height: 100%; object-fit: cover;">
+              <% } else { %>
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 36px; background: var(--color-bg-warm);">🎁</div>
+              <% } %>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 800; color: var(--color-success); margin-bottom: 4px;"><%= t('free_gift') %>!</div>
+              <h3 style="font-size: 16px; font-weight: 700; color: var(--color-text); margin-bottom: 4px;"><%= giftProduct.name %></h3>
+              <div style="font-size: 12px; color: var(--color-text-muted);" id="giftToggleHint"><%= t('tap_details') %> ▼</div>
+            </div>
+            <div style="font-size: 18px; font-weight: 800; color: var(--color-success);"><%= t('free') %></div>
+          </div>
+          <!-- Expandable Gift Details -->
+          <div id="giftDetails" style="max-height: 0; overflow: hidden; transition: max-height 0.4s ease, margin-top 0.3s ease; margin-top: 0;">
+            <div style="padding-top: 16px; border-top: 1px dashed var(--color-accent); margin-top: 16px;">
+              <% if (giftProduct.image_filename) { %>
+                <div style="text-align: center; margin-bottom: 12px;">
+                  <img src="/uploads/gifts/<%= giftProduct.image_filename %>" alt="<%= giftProduct.name %>" style="max-width: 100%; max-height: 250px; border-radius: var(--radius-md); object-fit: contain;">
+                </div>
+              <% } %>
+              <h4 style="font-size: 18px; font-weight: 700; color: var(--color-primary); margin-bottom: 8px;"><%= giftProduct.name %></h4>
+              <% if (giftProduct.description) { %>
+                <p style="font-size: 14px; color: var(--color-text-secondary); line-height: 1.7; margin-bottom: 12px;"><%= giftProduct.description %></p>
+              <% } %>
+              <button type="button" onclick="event.stopPropagation(); scrollToCart();" style="
+                background: var(--color-primary); color: #fff; border: none; border-radius: var(--radius-md);
+                padding: 10px 20px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+                transition: opacity 0.2s;
+              "><%= t('back_to_cart') %> ↑</button>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Cart Summary -->
+        <div style="
+          background: var(--color-card); border-radius: var(--radius-lg); padding: 24px;
+          box-shadow: var(--shadow-md); margin-top: 24px;
+        ">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--color-border-light);">
+            <span style="font-size: 16px; color: var(--color-text-secondary);"><%= t('total') %> (<%= items.length %> <%= t('products') %>)</span>
+            <span style="font-size: 20px; font-weight: 800; color: var(--color-primary);"><span id="cartSubtotal"><%= cartTotal %></span> <%= t('currency') %></span>
+          </div>
+          <a href="/cart/checkout" class="btn btn--primary btn--lg btn--full" style="text-align: center;">
+            <%= t('checkout') %>
+          </a>
+          <a href="/" style="display: block; text-align: center; margin-top: 12px; color: var(--color-text-secondary); font-size: 14px;">
+            <%= t('continue_shopping') %>
+          </a>
+        </div>
+      </div>
+
+      <% } else { %>
+        <div style="text-align: center; padding: 60px 20px; color: var(--color-text-muted);">
+          <p style="font-size: 64px; margin-bottom: 16px;">🛒</p>
+          <p style="font-size: 20px; font-weight: 700; margin-bottom: 8px;"><%= t('empty_cart') %></p>
+          <p style="font-size: 14px; margin-bottom: 24px;"><%= t('no_products_added') %></p>
+          <a href="/" class="btn btn--primary"><%= t('continue_shopping') %></a>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    var T_CONNECTION_ERROR = '<%= t("connection_error") %>';
+    var T_TAP_DETAILS = '<%= t("tap_details") %>';
+    var T_TAP_HIDE = '<%= t("tap_hide") %>';
+
+    function updateCartQty(itemId, delta) {
+      fetch('/api/cart/update-qty', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ itemId: itemId, delta: delta })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          if (data.removed) {
+            // Item was removed (qty reached 0), remove the element
+            var el = document.querySelector('[data-item-id="' + itemId + '"]');
+            if (el) el.remove();
+            // If cart is empty, reload to show empty state
+            if (data.cartCount === 0) location.reload();
+          } else {
+            // Update quantity display
+            document.getElementById('qty-' + itemId).textContent = data.newQty;
+            // Update item total price
+            var priceEl = document.getElementById('item-total-' + itemId);
+            if (priceEl) priceEl.textContent = data.itemTotal;
+          }
+          // Update subtotal
+          var subtotalEl = document.getElementById('cartSubtotal');
+          if (subtotalEl) subtotalEl.textContent = data.cartTotal;
+          // Update cart badge
+          var badge = document.getElementById('cartBadge');
+          if (badge) {
+            badge.textContent = data.cartCount;
+            badge.style.display = data.cartCount > 0 ? 'flex' : 'none';
+          }
+        }
+      })
+      .catch(function() {
+        showToast(T_CONNECTION_ERROR, 'error');
+      });
+    }
+
+    function removeCartItem(itemId) {
+      // Use delta to bring qty to 0 — send a large negative delta
+      fetch('/api/cart/update-qty', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ itemId: itemId, delta: -9999 })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          var el = document.querySelector('[data-item-id="' + itemId + '"]');
+          if (el) el.remove();
+          if (data.cartCount === 0) location.reload();
+          // Update subtotal
+          var subtotalEl = document.getElementById('cartSubtotal');
+          if (subtotalEl) subtotalEl.textContent = data.cartTotal;
+          // Update cart badge
+          var badge = document.getElementById('cartBadge');
+          if (badge) {
+            badge.textContent = data.cartCount;
+            badge.style.display = data.cartCount > 0 ? 'flex' : 'none';
+          }
+        }
+      })
+      .catch(function() {
+        showToast(T_CONNECTION_ERROR, 'error');
+      });
+    }
+  </script>
+  <script>
+    function toggleGiftDetails() {
+      var details = document.getElementById('giftDetails');
+      var hint = document.getElementById('giftToggleHint');
+      if (!details) return;
+      var isOpen = details.style.maxHeight && details.style.maxHeight !== '0px';
+      if (isOpen) {
+        details.style.maxHeight = '0';
+        details.style.marginTop = '0';
+        if (hint) hint.textContent = T_TAP_DETAILS + ' ▼';
+      } else {
+        details.style.maxHeight = details.scrollHeight + 'px';
+        details.style.marginTop = '16px';
+        if (hint) hint.textContent = T_TAP_HIDE + ' ▲';
+      }
+    }
+
+    function scrollToCart() {
+      var cartSection = document.querySelector('.section-header');
+      if (cartSection) {
+        cartSection.scrollIntoView({ behavior: 'smooth' });
+      }
+      // Also collapse the gift details
+      var details = document.getElementById('giftDetails');
+      var hint = document.getElementById('giftToggleHint');
+      if (details) {
+        details.style.maxHeight = '0';
+        details.style.marginTop = '0';
+      }
+      if (hint) hint.textContent = T_TAP_DETAILS + ' ▼';
+    }
+  </script>
+  <script src="/js/main.js"></script>
+</body>
+</html>

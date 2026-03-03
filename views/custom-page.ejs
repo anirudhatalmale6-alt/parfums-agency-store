@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <%
+    var _cpLang = (typeof lang !== 'undefined') ? lang : 'ar';
+    var _cpSiteLang = (typeof siteLang !== 'undefined') ? siteLang : 'ar';
+    var _cpTitle = _cpLang === 'fr' && page.title_fr ? page.title_fr : page.title_ar;
+    var _cpMetaTitle = _cpLang === 'fr' && page.meta_title_fr ? page.meta_title_fr : (page.meta_title_ar || _cpTitle);
+    var _cpMetaDesc = _cpLang === 'fr' && page.meta_description_fr ? page.meta_description_fr : (page.meta_description_ar || '');
+    var _cpHasAr = page.content_ar && page.content_ar.trim();
+    var _cpHasFr = page.content_fr && page.content_fr.trim();
+    var _cpShowBoth = _cpSiteLang === 'both' && _cpHasAr && _cpHasFr;
+  %>
+  <title><%= _cpMetaTitle %> — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+  <% if (_cpMetaDesc) { %>
+  <meta name="description" content="<%= _cpMetaDesc %>">
+  <% } %>
+  <style>
+    .custom-page-content { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+    .custom-page-content h1,
+    .custom-page-content h2,
+    .custom-page-content h3,
+    .custom-page-content h4 { color: var(--color-primary); margin-top: 1.5em; margin-bottom: 0.6em; }
+    .custom-page-content p { font-size: 16px; line-height: 1.9; color: var(--color-text-muted); margin-bottom: 1em; }
+    .custom-page-content ul, .custom-page-content ol { padding-inline-start: 24px; margin-bottom: 1em; }
+    .custom-page-content li { font-size: 16px; line-height: 2; color: var(--color-text-muted); }
+    .custom-page-content a { color: var(--color-primary); text-decoration: underline; }
+    .custom-page-content img { max-width: 100%; height: auto; border-radius: 12px; margin: 16px 0; }
+    .custom-page-content table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    .custom-page-content th, .custom-page-content td { border: 1px solid #e0dbd4; padding: 10px 14px; text-align: inherit; }
+    .custom-page-content th { background: #faf8f5; font-weight: 700; }
+    .custom-page-content blockquote { border-inline-start: 4px solid var(--color-primary); padding: 12px 20px; margin: 16px 0; background: #faf8f5; border-radius: 0 8px 8px 0; }
+  </style>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner">
+        <div class="navbar__brand">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="/search" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('search') %>">🔍</a>
+          <a href="/" class="navbar__cta"><%= t('home') %></a>
+          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
+          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <section style="padding: 120px 0 60px;">
+    <div class="container container--narrow">
+      <div class="section-header animate-on-scroll">
+        <% if (_cpShowBoth && page.title_fr) { %>
+          <h1 class="section-header__title" dir="rtl"><%= page.title_ar %></h1>
+          <div class="section-header__divider"></div>
+          <h2 class="section-header__title" dir="ltr" style="direction: ltr; font-size: 0.85em; margin-top: 8px; opacity: 0.8;"><%= page.title_fr %></h2>
+        <% } else { %>
+          <h1 class="section-header__title"><%= _cpTitle %></h1>
+          <div class="section-header__divider"></div>
+        <% } %>
+      </div>
+
+      <% if (_cpShowBoth) { %>
+        <!-- Arabic content -->
+        <div class="custom-page-content animate-on-scroll" dir="rtl" style="direction: rtl; text-align: right;">
+          <%- page.content_ar %>
+        </div>
+        <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 40px 0;">
+        <!-- French content -->
+        <div class="custom-page-content animate-on-scroll" dir="ltr" style="direction: ltr; text-align: left;">
+          <%- page.content_fr %>
+        </div>
+      <% } else if (_cpLang === 'fr' && _cpHasFr) { %>
+        <div class="custom-page-content animate-on-scroll" dir="ltr" style="direction: ltr; text-align: left;">
+          <%- page.content_fr %>
+        </div>
+      <% } else { %>
+        <div class="custom-page-content animate-on-scroll" dir="rtl" style="direction: rtl; text-align: right;">
+          <%- page.content_ar %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%- include('partials/footer') %>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

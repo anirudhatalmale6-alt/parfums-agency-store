@@ -1,0 +1,494 @@
+<%
+  var _fd = (typeof footerData !== 'undefined' && footerData) ? footerData : null;
+  var _fDir = (typeof dir !== 'undefined') ? dir : 'rtl';
+  var _fLang = (typeof lang !== 'undefined') ? lang : 'ar';
+  var _fAlign = _fDir === 'rtl' ? 'right' : 'left';
+  var _fBg = (typeof footerBgColor !== 'undefined') ? footerBgColor : '#FFFFFF';
+  var _fTxt = (typeof footerTextColor !== 'undefined') ? footerTextColor : '#000000';
+  var _isLight = (_fBg.toLowerCase() === '#ffffff' || _fBg.toLowerCase() === '#fff' || _fBg === 'white');
+  var _borderColor = _isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)';
+  var _fHeadSize = (typeof footerHeadingSize !== 'undefined' && footerHeadingSize) ? footerHeadingSize : '14';
+  var _fHeadColor = (typeof footerHeadingColor !== 'undefined' && footerHeadingColor) ? footerHeadingColor : '';
+  var _fLinkSize = (typeof footerLinkSize !== 'undefined' && footerLinkSize) ? footerLinkSize : '14';
+  var _fLinkColor = (typeof footerLinkColor !== 'undefined' && footerLinkColor) ? footerLinkColor : '';
+  var _fDescSize = (typeof footerDescSize !== 'undefined' && footerDescSize) ? footerDescSize : '14';
+  var _fDescColor = (typeof footerDescColor !== 'undefined' && footerDescColor) ? footerDescColor : '';
+  var _fLogo = (typeof footerLogo !== 'undefined' && footerLogo) ? footerLogo : '';
+%>
+<footer class="site-footer" dir="<%= _fDir %>">
+  <style>
+    .site-footer { background: <%= _fBg %>; color: <%= _fTxt %>; border-top: 1px solid #e5e5e5; margin-top: 40px; }
+    .site-footer * { box-sizing: border-box; }
+    .footer-top { padding: 48px 0 32px; }
+    .footer-container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .footer-top-grid { display: flex; gap: 36px; flex-wrap: wrap; }
+    .footer-info { flex: 1; min-width: 220px; max-width: 320px; }
+    .footer-logo { display: inline-block; margin-bottom: 16px; text-decoration: none; transition: transform 0.3s ease, filter 0.3s ease; }
+    .footer-logo:hover { transform: scale(1.05); filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15)); }
+    .footer-logo-text { font-size: 22px; font-weight: 800; color: inherit; letter-spacing: -0.5px; }
+    .footer-desc { font-size: <%= _fDescSize %>px; line-height: 1.7; opacity: 0.6; margin: 0; <%= _fDescColor ? 'color: ' + _fDescColor + ';' : '' %> }
+    .footer-menus { display: flex; flex: 2; gap: 40px; flex-wrap: wrap; }
+    /* Desktop: classic column layout */
+    .footer-nav-card {
+      min-width: 140px; flex: 1;
+      background: transparent; border-radius: 0; margin-bottom: 0;
+      box-shadow: none; border: none; overflow: visible;
+    }
+    .footer-nav-toggle { display: block; padding: 0; cursor: default; user-select: auto; }
+    .footer-nav-card-icon { display: none; }
+    .footer-nav-heading {
+      font-size: <%= _fHeadSize %>px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; margin-bottom: 16px; display: block;
+      <%= _fHeadColor ? 'color: ' + _fHeadColor + ';' : 'color: inherit;' %>
+    }
+    .footer-nav-body { display: block; }
+    .footer-nav-body-wrap { overflow: visible; }
+    .footer-nav-list { list-style: none; margin: 0; padding: 0; text-align: <%= _fAlign %>; }
+    .footer-nav-item { margin-bottom: 10px; }
+    .footer-nav-link { text-decoration: none; font-size: <%= _fLinkSize %>px; opacity: 0.55; transition: opacity 0.2s, padding 0.2s; display: inline-block; <%= _fLinkColor ? 'color: ' + _fLinkColor + ';' : 'color: inherit;' %> }
+    .footer-nav-link:hover { opacity: 1; <%= _fDir === 'rtl' ? 'padding-right: 4px' : 'padding-left: 4px' %>; }
+    .footer-lang-toggle { display: flex; gap: 12px; margin-top: 20px; padding-top: 16px; border-top: 1px solid <%= _borderColor %>; }
+    .footer-lang-toggle a { color: inherit; text-decoration: none; font-size: 13px; font-weight: 700; transition: opacity 0.2s; }
+    .footer-bottom { border-top: 1px solid <%= _borderColor %>; padding: 20px 0; }
+    .footer-bottom-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-payments { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .footer-payment-icon { display: flex; align-items: center; justify-content: center; width: 56px; height: 36px; background: <%= _isLight ? '#fff' : 'rgba(255,255,255,0.08)' %>; border-radius: 6px; border: 1px solid rgba(0,0,0,0.08); transition: transform 0.25s ease, box-shadow 0.25s ease; overflow: hidden; }
+    .footer-payment-icon:hover { transform: scale(1.08); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .footer-payment-icon img { height: 22px; max-width: 44px; object-fit: contain; }
+    /* Mobile: FAQ-style card accordion */
+    @media (max-width: 768px) {
+      .footer-top-grid { flex-direction: column; gap: 24px; }
+      .footer-info { max-width: 100%; text-align: center; }
+      .footer-menus { flex-direction: column; gap: 0; }
+      .footer-nav-card {
+        background: var(--color-card, #fff); border-radius: 16px; margin-bottom: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06); border: 1px solid rgba(0,0,0,0.04);
+        overflow: hidden; transition: box-shadow 0.3s ease, transform 0.2s ease;
+      }
+      .footer-nav-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.1); transform: translateY(-1px); }
+      .footer-nav-card.open { box-shadow: 0 6px 24px rgba(0,0,0,0.1); }
+      .footer-nav-toggle {
+        display: flex; align-items: center; padding: 16px; cursor: pointer;
+        user-select: none; gap: 12px; transition: background 0.2s;
+      }
+      .footer-nav-toggle:hover { background: rgba(0,0,0,0.015); }
+      .footer-nav-card-icon {
+        display: flex; width: 28px; height: 28px; border-radius: 50%;
+        background: #f0f0f0; box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        align-items: center; justify-content: center; flex-shrink: 0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); position: relative; order: 1;
+      }
+      .footer-nav-card-icon::before, .footer-nav-card-icon::after {
+        content: ''; position: absolute; background: #666; border-radius: 1px;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .footer-nav-card-icon::before { width: 12px; height: 2px; }
+      .footer-nav-card-icon::after { width: 2px; height: 12px; }
+      .footer-nav-card.open .footer-nav-card-icon {
+        background: var(--color-primary, #333); box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        transform: rotate(180deg);
+      }
+      .footer-nav-card.open .footer-nav-card-icon::before { background: #fff; }
+      .footer-nav-card.open .footer-nav-card-icon::after { background: #fff; height: 0; }
+      .footer-nav-heading { font-size: 14px; flex: 1; line-height: 1.6; order: 0; margin-bottom: 0; text-transform: none; letter-spacing: 0; }
+      .footer-nav-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+      .footer-nav-card.open .footer-nav-body { grid-template-rows: 1fr; }
+      .footer-nav-body-wrap { overflow: hidden; }
+      .footer-nav-list { padding: 0 16px 16px; }
+      .footer-bottom-inner { flex-direction: column; text-align: center; }
+      .footer-payments { justify-content: center; }
+      .footer-desc { text-align: center; }
+    }
+  </style>
+
+  <% if (_fd && _fd.columns && _fd.columns.length > 0) { %>
+  <!-- Dynamic footer from admin -->
+  <div class="footer-top">
+    <div class="footer-container">
+      <div class="footer-top-grid">
+        <!-- Info column -->
+        <div class="footer-info" style="text-align: <%= _fAlign %>;">
+          <a href="/" class="footer-logo">
+            <% if (_fLogo) { %>
+              <img src="/uploads/settings/<%= _fLogo %>" alt="<%= typeof siteName !== 'undefined' ? siteName : '' %>" style="max-height: 36px;">
+            <% } else if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="<%= typeof siteName !== 'undefined' ? siteName : '' %>" style="max-height: 36px;">
+            <% } else { %>
+              <span class="footer-logo-text"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+          <% var _footerDesc = (_fLang === 'fr' && _fd.description_fr) ? _fd.description_fr : _fd.description; %>
+          <% if (_footerDesc) { %>
+            <p class="footer-desc" dir="<%= (_fLang === 'fr') ? 'ltr' : 'rtl' %>" style="text-align: <%= (_fLang === 'fr') ? 'left' : 'right' %>;"><%= _footerDesc %></p>
+          <% } %>
+          <% if (typeof siteLang !== 'undefined' && siteLang === 'both') { %>
+            <div class="footer-lang-toggle">
+              <a href="?lang=ar" style="opacity: <%= _fLang === 'ar' ? '1' : '0.5' %>; border-bottom: <%= _fLang === 'ar' ? '2px solid currentColor' : 'none' %>; padding-bottom: 2px;">العربية</a>
+              <span style="opacity: 0.3;">|</span>
+              <a href="?lang=fr" style="opacity: <%= _fLang === 'fr' ? '1' : '0.5' %>; border-bottom: <%= _fLang === 'fr' ? '2px solid currentColor' : 'none' %>; padding-bottom: 2px;">Français</a>
+            </div>
+          <% } %>
+        </div>
+        <!-- Menu columns — FAQ-style cards -->
+        <div class="footer-menus">
+          <% _fd.columns.forEach(function(fc) { %>
+            <% var _colLang = (_fLang === 'fr' && fc.title_fr) ? 'fr' : 'ar'; %>
+            <% var _colDir = _colLang === 'fr' ? 'ltr' : 'rtl'; %>
+            <% var _colAlign = _colLang === 'fr' ? 'left' : 'right'; %>
+            <div class="footer-nav-card" dir="<%= _colDir %>" onclick="if(window.innerWidth<=768)this.classList.toggle('open')">
+              <div class="footer-nav-toggle">
+                <span class="footer-nav-card-icon"></span>
+                <span class="footer-nav-heading" style="text-align: <%= _colAlign %>;"><%= _colLang === 'fr' ? fc.title_fr : fc.title %></span>
+              </div>
+              <div class="footer-nav-body">
+                <div class="footer-nav-body-wrap">
+                  <ul class="footer-nav-list" style="text-align: <%= _colAlign %>;">
+                    <% if (fc.links && fc.links.length > 0) { %>
+                      <% fc.links.forEach(function(link) { %>
+                        <% var _linkLang = (_fLang === 'fr' && link.label_fr) ? 'fr' : 'ar'; %>
+                        <li class="footer-nav-item">
+                          <a href="<%= link.url || '#' %>" class="footer-nav-link" dir="<%= _linkLang === 'fr' ? 'ltr' : 'rtl' %>"><%= _linkLang === 'fr' ? link.label_fr : link.label %></a>
+                        </li>
+                      <% }); %>
+                    <% } %>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-container">
+      <div class="footer-bottom-inner">
+        <% if (_fd.custom_icons && _fd.custom_icons.length > 0) { %>
+        <div class="footer-payments">
+          <% _fd.custom_icons.forEach(function(icon) { %>
+            <% if (icon.url) { %>
+              <a href="<%= icon.url %>" class="footer-payment-icon" title="<%= icon.name %>" target="_blank" rel="noopener" style="text-decoration: none;">
+                <img src="/uploads/footer-icons/<%= icon.image_filename %>" alt="<%= icon.name %>">
+              </a>
+            <% } else { %>
+              <div class="footer-payment-icon" title="<%= icon.name %>">
+                <img src="/uploads/footer-icons/<%= icon.image_filename %>" alt="<%= icon.name %>">
+              </div>
+            <% } %>
+          <% }); %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <% } else { %>
+  <!-- Fallback static footer -->
+  <div style="padding: 32px 0; text-align: center;">
+    <div class="footer-container">
+      <% if (typeof siteLang !== 'undefined' && siteLang === 'both') { %>
+      <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 12px;">
+        <a href="?lang=ar" style="color: inherit; text-decoration: none; font-size: 13px; font-weight: 700; opacity: <%= _fLang === 'ar' ? '1' : '0.6' %>; border-bottom: <%= _fLang === 'ar' ? '2px solid currentColor' : 'none' %>; padding-bottom: 2px;">العربية</a>
+        <span style="opacity: 0.3;">|</span>
+        <a href="?lang=fr" style="color: inherit; text-decoration: none; font-size: 13px; font-weight: 700; opacity: <%= _fLang === 'fr' ? '1' : '0.6' %>; border-bottom: <%= _fLang === 'fr' ? '2px solid currentColor' : 'none' %>; padding-bottom: 2px;">Français</a>
+      </div>
+      <% } %>
+      <div style="display: flex; justify-content: center; gap: 24px; margin-bottom: 12px; flex-wrap: wrap;">
+        <a href="/returns" style="color: inherit; text-decoration: none; opacity: 0.8;"><%= t('return_policy') %></a>
+        <a href="/payment-delivery" style="color: inherit; text-decoration: none; opacity: 0.8;"><%= t('payment_delivery') %></a>
+        <a href="/contact" style="color: inherit; text-decoration: none; opacity: 0.8;"><%= t('contact_us') %></a>
+      </div>
+      <p style="opacity: 0.5; font-size: 13px;"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %> — <%= t('all_rights') %></p>
+    </div>
+  </div>
+  <% } %>
+</footer>
+
+<!-- Sidebar Categories Menu -->
+<% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
+<% var _sidePos = (typeof dir !== 'undefined' && dir === 'ltr') ? 'left' : 'right'; %>
+<div id="sidebarOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:998; transition:opacity 0.3s;" onclick="closeSidebar()"></div>
+<div id="sidebarMenu" style="position:fixed; top:0; <%= _sidePos %>:-280px; width:280px; height:100%; background:var(--color-card); z-index:999; transition:<%= _sidePos %> 0.3s ease; box-shadow:<%= _sidePos === 'right' ? '-' : '' %>2px 0 12px rgba(0,0,0,0.1); overflow-y:auto; display:flex; flex-direction:column;">
+  <div style="padding:20px 20px 16px; border-bottom:1px solid var(--color-border-light); display:flex; align-items:center; justify-content:space-between;">
+    <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--color-primary);"><%= t('categories') %></h3>
+    <button type="button" onclick="closeSidebar()" style="background:none; border:none; font-size:24px; color:var(--color-text-muted); cursor:pointer; padding:0; line-height:1;">&times;</button>
+  </div>
+  <nav style="flex:1; padding:12px 0;">
+    <a href="/" style="display:flex; align-items:center; gap:12px; padding:12px 20px; text-decoration:none; color:var(--color-text); font-size:14px; font-weight:600; transition:background 0.2s;" onmouseover="this.style.background='var(--color-bg-warm)'" onmouseout="this.style.background=''">
+      <span style="font-size:18px;">🏠</span> <%= t('home') %>
+    </a>
+    <% sidebarCategories.forEach(function(cat) { %>
+      <a href="/category/<%= cat.slug %>" style="display:flex; align-items:center; gap:12px; padding:12px 20px; text-decoration:none; color:var(--color-text); font-size:14px; font-weight:600; transition:background 0.2s;" onmouseover="this.style.background='var(--color-bg-warm)'" onmouseout="this.style.background=''">
+        <% if (cat.image_filename) { %>
+          <img src="/uploads/categories/<%= cat.image_filename %>" alt="" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+        <% } else { %>
+          <span style="width:32px; height:32px; border-radius:50%; background:var(--color-bg-warm); display:flex; align-items:center; justify-content:center; font-size:16px;">📦</span>
+        <% } %>
+        <%= cat.name %>
+      </a>
+    <% }); %>
+  </nav>
+  <div style="padding:16px 20px; border-top:1px solid var(--color-border-light);">
+    <a href="/feedback" style="display:flex; align-items:center; gap:8px; text-decoration:none; color:var(--color-primary); font-size:13px; font-weight:700;">⭐ <%= t('sidebar_feedback') %></a>
+  </div>
+</div>
+<script>
+var _sidebarSide = '<%= _sidePos %>';
+function openSidebar(){
+  document.getElementById('sidebarOverlay').style.display='block';
+  document.getElementById('sidebarMenu').style[_sidebarSide]='0';
+  document.body.style.overflow='hidden';
+}
+function closeSidebar(){
+  document.getElementById('sidebarMenu').style[_sidebarSide]='-280px';
+  document.getElementById('sidebarOverlay').style.display='none';
+  document.body.style.overflow='';
+}
+</script>
+<% } %>
+
+<!-- Cart Drawer -->
+<% if (typeof cartMode !== 'undefined' && cartMode === 'drawer') { %>
+<% var _cartSide = (typeof dir !== 'undefined' && dir === 'ltr') ? 'right' : 'left'; %>
+<div id="cartDrawerOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; transition:opacity 0.3s;" onclick="closeCartDrawer()"></div>
+<div id="cartDrawer" style="position:fixed; top:0; <%= _cartSide %>:-360px; width:360px; max-width:90vw; height:100%; background:var(--color-card); z-index:1001; transition:<%= _cartSide %> 0.3s ease; box-shadow:<%= _cartSide === 'left' ? '' : '-' %>2px 0 16px rgba(0,0,0,0.15); display:flex; flex-direction:column;">
+  <!-- Header -->
+  <div style="padding:16px 20px; border-bottom:1px solid var(--color-border-light); display:flex; align-items:center; justify-content:space-between; flex-shrink:0;">
+    <h3 style="margin:0; font-size:18px; font-weight:700; color:var(--color-primary);">🛒 <%= t('shopping_cart') %></h3>
+    <button type="button" onclick="closeCartDrawer()" style="background:none; border:none; font-size:24px; color:var(--color-text-muted); cursor:pointer; padding:0; line-height:1;">&times;</button>
+  </div>
+  <!-- Items container -->
+  <div id="cartDrawerItems" style="flex:1; overflow-y:auto; padding:12px 16px;">
+    <div id="cartDrawerLoading" style="text-align:center; padding:40px 0; color:var(--color-text-muted);">
+      <div style="font-size:32px; margin-bottom:8px;">🛒</div>
+      <p><%= t('loading_more') %></p>
+    </div>
+    <div id="cartDrawerEmpty" style="display:none; text-align:center; padding:40px 0; color:var(--color-text-muted);">
+      <div style="font-size:48px; margin-bottom:12px;">🛒</div>
+      <p style="font-size:16px; font-weight:600; margin-bottom:8px;"><%= t('empty_cart') %></p>
+      <a href="/" style="display:inline-block; margin-top:12px; padding:10px 24px; background:var(--color-button); color:var(--color-button-text); text-decoration:none; border-radius:10px; font-size:14px; font-weight:700;"><%= t('continue_shopping') %></a>
+    </div>
+    <div id="cartDrawerList" style="display:none;"></div>
+  </div>
+  <!-- Footer with total -->
+  <div id="cartDrawerFooter" style="display:none; padding:16px 20px; border-top:2px solid var(--color-border-light); flex-shrink:0; background:var(--color-bg-warm);">
+    <div id="cartDrawerGift" style="display:none; margin-bottom:12px; padding:10px; background:var(--color-success-light); border-radius:8px; font-size:13px; color:var(--color-success); font-weight:600;"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <span style="font-size:15px; font-weight:700; color:var(--color-text-secondary);"><%= t('total') %></span>
+      <span id="cartDrawerTotal" style="font-size:20px; font-weight:800; color:var(--color-primary);"></span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="/cart" style="flex:1; display:block; text-align:center; padding:12px; background:var(--color-bg-warm); color:var(--color-text); text-decoration:none; border-radius:10px; font-size:14px; font-weight:700;"><%= t('cart') %></a>
+      <a id="cartDrawerCheckoutBtn" href="/cart" style="flex:2; display:block; text-align:center; padding:12px; background:var(--color-button); color:var(--color-button-text); text-decoration:none; border-radius:10px; font-size:14px; font-weight:700;"><%= t('checkout') %></a>
+    </div>
+  </div>
+</div>
+<script>
+var _cartDrawerSide = '<%= _cartSide %>';
+var _cartDrawerCurrency = '<%= t("currency") %>';
+var _cartDrawerRemoveText = '<%= t("remove") %>';
+var _cartDrawerFreeGiftText = '<%= t("free_gift") %>';
+
+function openCartDrawer(){
+  document.getElementById('cartDrawerOverlay').style.display='block';
+  document.getElementById('cartDrawer').style[_cartDrawerSide]='0';
+  document.body.style.overflow='hidden';
+  loadCartDrawer();
+}
+function closeCartDrawer(){
+  document.getElementById('cartDrawer').style[_cartDrawerSide]= '-360px';
+  document.getElementById('cartDrawerOverlay').style.display='none';
+  document.body.style.overflow='';
+}
+
+function loadCartDrawer(){
+  document.getElementById('cartDrawerLoading').style.display='block';
+  document.getElementById('cartDrawerEmpty').style.display='none';
+  document.getElementById('cartDrawerList').style.display='none';
+  document.getElementById('cartDrawerFooter').style.display='none';
+
+  fetch('/api/cart')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      document.getElementById('cartDrawerLoading').style.display='none';
+      if(!data.items || data.items.length===0){
+        document.getElementById('cartDrawerEmpty').style.display='block';
+        return;
+      }
+      var html='';
+      data.items.forEach(function(item){
+        var imgHtml = item.main_image
+          ? '<img src="/uploads/products/'+item.main_image+'" style="width:60px;height:60px;object-fit:cover;border-radius:8px;flex-shrink:0;">'
+          : '<div style="width:60px;height:60px;border-radius:8px;background:var(--color-bg-warm);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🛍️</div>';
+        var varInfo='';
+        if(item.size_label) varInfo+='<span style="font-size:11px;color:var(--color-text-muted);background:var(--color-bg-warm);padding:2px 6px;border-radius:4px;">'+item.size_label+'</span> ';
+        if(item.color_label) varInfo+='<span style="font-size:11px;color:var(--color-text-muted);background:var(--color-bg-warm);padding:2px 6px;border-radius:4px;">'+item.color_label+'</span>';
+        html+='<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--color-border-light);align-items:center;">'+
+          imgHtml+
+          '<div style="flex:1;min-width:0;">'+
+            '<a href="/product/'+item.slug+'" style="font-size:13px;font-weight:600;color:var(--color-text);text-decoration:none;display:block;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+item.title+'</a>'+
+            (varInfo?'<div style="margin-bottom:4px;">'+varInfo+'</div>':'')+
+            '<div style="display:flex;align-items:center;gap:8px;">'+
+              '<span id="drawer-item-total-'+item.id+'" style="font-size:14px;font-weight:700;color:var(--color-primary);">'+item.subtotal+' '+_cartDrawerCurrency+'</span>'+
+            '</div>'+
+            '<div style="display:flex;align-items:center;gap:6px;margin-top:6px;">'+
+              (item.quantity<=1
+                ? '<button id="drawer-minus-'+item.id+'" disabled onclick="drawerQtyDelta('+item.id+',-1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--color-border-light);background:var(--color-bg);font-size:16px;cursor:not-allowed;display:flex;align-items:center;justify-content:center;color:var(--color-text-muted);line-height:1;">−</button>'
+                : '<button id="drawer-minus-'+item.id+'" onclick="drawerQtyDelta('+item.id+',-1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--color-border);background:var(--color-bg-warm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);line-height:1;">−</button>'
+              )+
+              '<span id="drawer-qty-'+item.id+'" style="font-size:14px;font-weight:700;color:var(--color-text);min-width:20px;text-align:center;">'+item.quantity+'</span>'+
+              '<button onclick="drawerQtyDelta('+item.id+',1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--color-border);background:var(--color-bg-warm);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);line-height:1;">+</button>'+
+            '</div>'+
+          '</div>'+
+          '<button onclick="removeCartDrawerItem('+item.id+')" style="background:none;border:none;font-size:18px;color:var(--color-text-muted);cursor:pointer;padding:4px;line-height:1;" title="'+_cartDrawerRemoveText+'">🗑️</button>'+
+        '</div>';
+      });
+      document.getElementById('cartDrawerList').innerHTML=html;
+      document.getElementById('cartDrawerList').style.display='block';
+      document.getElementById('cartDrawerTotal').textContent=data.cartTotal+' '+data.currency;
+      document.getElementById('cartDrawerFooter').style.display='block';
+
+      // Gift product
+      var giftDiv = document.getElementById('cartDrawerGift');
+      if(data.giftProduct){
+        var giftImgHtml = data.giftProduct.image_filename
+          ? '<img src="/uploads/gifts/'+data.giftProduct.image_filename+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;flex-shrink:0;" alt="">'
+          : '<span style="font-size:24px;flex-shrink:0;">🎁</span>';
+        giftDiv.innerHTML='<div style="display:flex;align-items:center;gap:10px;">'+giftImgHtml+'<div style="flex:1;min-width:0;"><div style="font-weight:700;font-size:13px;">'+_cartDrawerFreeGiftText+'</div><div style="font-size:12px;opacity:0.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+data.giftProduct.name+'</div></div><span style="flex-shrink:0;font-weight:800;color:var(--color-success);font-size:13px;">مجاناً</span></div>';
+        giftDiv.style.display='block';
+      } else {
+        giftDiv.style.display='none';
+      }
+
+      // Update badge
+      var totalQty=0;
+      data.items.forEach(function(i){ totalQty+=i.quantity; });
+      var badge=document.getElementById('cartBadge');
+      if(badge){
+        badge.textContent=totalQty;
+        badge.style.display=totalQty>0?'flex':'none';
+      }
+    })
+    .catch(function(){
+      document.getElementById('cartDrawerLoading').style.display='none';
+      document.getElementById('cartDrawerEmpty').style.display='block';
+    });
+}
+
+function removeCartDrawerItem(itemId){
+  fetch('/cart/remove',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({item_id:itemId})
+  }).then(function(){ loadCartDrawer(); });
+}
+
+function drawerQtyDelta(itemId, delta){
+  fetch('/api/cart/update-qty',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({itemId:itemId, delta:delta})
+  }).then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.success){
+        if(data.removed){
+          loadCartDrawer();
+        } else {
+          var qtyEl = document.getElementById('drawer-qty-'+itemId);
+          if(qtyEl) qtyEl.textContent=data.newQty;
+          var itemTotalEl = document.getElementById('drawer-item-total-'+itemId);
+          if(itemTotalEl) itemTotalEl.textContent=data.itemTotal+' '+_cartDrawerCurrency;
+          var totalEl = document.getElementById('cartDrawerTotal');
+          if(totalEl) totalEl.textContent=data.cartTotal+' '+_cartDrawerCurrency;
+          var minusBtnEl = document.getElementById('drawer-minus-'+itemId);
+          if(minusBtnEl){
+            if(data.newQty<=1){
+              minusBtnEl.disabled=true;
+              minusBtnEl.style.cursor='not-allowed';
+              minusBtnEl.style.color='var(--color-text-muted)';
+              minusBtnEl.style.borderColor='var(--color-border-light)';
+              minusBtnEl.style.background='var(--color-bg)';
+            } else {
+              minusBtnEl.disabled=false;
+              minusBtnEl.style.cursor='pointer';
+              minusBtnEl.style.color='var(--color-text-secondary)';
+              minusBtnEl.style.borderColor='var(--color-border)';
+              minusBtnEl.style.background='var(--color-bg-warm)';
+            }
+          }
+        }
+        var badge=document.getElementById('cartBadge');
+        if(badge && data.cartCount !== undefined){
+          badge.textContent=data.cartCount;
+          badge.style.display=data.cartCount>0?'flex':'none';
+        }
+      }
+    });
+}
+
+// Legacy compat wrapper
+function updateCartDrawerQty(itemId, newQty){
+  var currentQtyEl = document.getElementById('drawer-qty-'+itemId);
+  var currentQty = currentQtyEl ? parseInt(currentQtyEl.textContent) : 0;
+  var delta = newQty - currentQty;
+  if(newQty<1){ removeCartDrawerItem(itemId); return; }
+  drawerQtyDelta(itemId, delta);
+}
+</script>
+<% } %>
+
+<%/* Announcement Bar — injected at top of body */%>
+<% if (typeof announcementEnabled !== 'undefined' && announcementEnabled) { %>
+<%
+  var _annText = (typeof lang !== 'undefined' && lang === 'fr' && typeof announcementTextFr !== 'undefined' && announcementTextFr) ? announcementTextFr : (typeof announcementText !== 'undefined' ? announcementText : '');
+  var _annBg = typeof announcementBgColor !== 'undefined' ? announcementBgColor : '#000000';
+  var _annColor = typeof announcementTextColor !== 'undefined' ? announcementTextColor : '#FFFFFF';
+  var _annH = typeof announcementHeight !== 'undefined' ? announcementHeight : '44';
+  var _annMH = typeof announcementMobileHeight !== 'undefined' ? announcementMobileHeight : '40';
+  var _annLink = typeof announcementLink !== 'undefined' ? announcementLink : '';
+  var _annDir = (typeof dir !== 'undefined') ? dir : 'rtl';
+%>
+<% if (_annText) { %>
+<div id="announcementBarData" style="display:none;" data-text="<%- _annText.replace(/"/g, '&quot;') %>" data-bg="<%= _annBg %>" data-color="<%= _annColor %>" data-h="<%= _annH %>" data-mh="<%= _annMH %>" data-link="<%= _annLink %>" data-dir="<%= _annDir %>"></div>
+<script>
+(function(){
+  var d = document.getElementById('announcementBarData');
+  if (!d) return;
+  var text = d.getAttribute('data-text');
+  var bg = d.getAttribute('data-bg');
+  var color = d.getAttribute('data-color');
+  var h = d.getAttribute('data-h');
+  var mh = d.getAttribute('data-mh');
+  var link = d.getAttribute('data-link');
+  var dir = d.getAttribute('data-dir');
+  if (!text) return;
+  var bar = document.createElement('div');
+  bar.id = 'announcement-bar';
+  bar.dir = dir;
+  var isMobile = window.innerWidth <= 768;
+  var height = isMobile ? mh : h;
+  bar.style.cssText = 'background:' + bg + ';color:' + color + ';height:' + height + 'px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;letter-spacing:0.3px;text-align:center;padding:0 16px;position:fixed;top:0;left:0;right:0;z-index:1001;';
+  if (link) {
+    var a = document.createElement('a');
+    a.href = link;
+    a.style.cssText = 'color:inherit;text-decoration:none;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+    a.textContent = text;
+    bar.appendChild(a);
+  } else {
+    bar.textContent = text;
+  }
+  document.body.insertBefore(bar, document.body.firstChild);
+  // Push fixed navbar down
+  var nav = document.querySelector('.navbar');
+  if (nav) nav.style.top = height + 'px';
+  // Increase body padding-top to account for announcement bar
+  var currentPad = parseInt(window.getComputedStyle(document.body).paddingTop) || 0;
+  document.body.style.paddingTop = (currentPad + parseInt(height)) + 'px';
+  var style = document.createElement('style');
+  style.textContent = '@media(max-width:768px){#announcement-bar{height:' + mh + 'px !important;font-size:12px !important;}}';
+  document.head.appendChild(style);
+  d.remove();
+})();
+</script>
+<% } %>
+<% } %>

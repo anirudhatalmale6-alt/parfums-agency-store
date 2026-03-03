@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%= landingPage.title %> — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+  <style>
+    /* Fade-in animation */
+    .lp-section { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .lp-section.visible { opacity: 1; transform: translateY(0); }
+
+    /* WhatsApp-style audio player */
+    .wa-audio-player { display: flex; align-items: center; gap: 10px; background: #dcf8c6; border-radius: 12px; padding: 10px 16px; max-width: 340px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .wa-play-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #25D366; color: #fff; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+    .wa-play-btn:hover { background: #1EBE5B; }
+    .wa-progress-wrap { flex: 1; position: relative; height: 28px; display: flex; align-items: center; }
+    .wa-waveform { display: flex; align-items: center; gap: 2px; height: 28px; width: 100%; }
+    .wa-waveform-bar { width: 3px; border-radius: 2px; background: #93d882; transition: background 0.2s; }
+    .wa-waveform-bar.played { background: #075E54; }
+    .wa-time { font-size: 11px; color: #667781; font-weight: 600; flex-shrink: 0; min-width: 36px; text-align: center; }
+
+    /* Button section sizes */
+    .lp-btn-small { padding: 10px 24px; font-size: 14px; }
+    .lp-btn-medium { padding: 14px 40px; font-size: 17px; }
+    .lp-btn-large { padding: 18px 56px; font-size: 20px; width: 100%; max-width: 420px; }
+
+    /* Background audio floating control */
+    .bg-audio-control { position: fixed; bottom: 80px; left: 16px; z-index: 998; width: 44px; height: 44px; border-radius: 50%; border: none; background: rgba(0,0,0,0.6); color: #fff; font-size: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(8px); transition: background 0.2s; }
+    .bg-audio-control:hover { background: rgba(0,0,0,0.8); }
+
+    /* Image protection */
+    .landing-sections img {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      pointer-events: none;
+    }
+
+    /* Bottom padding for sticky button */
+    body { padding-bottom: 70px; }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <!-- Navbar -->
+  <% if (!landingPage.hide_header) { %>
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner">
+        <div class="navbar__brand">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+            <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+          </a>
+        </div>
+        <% var navPayType = typeof landingPage !== 'undefined' ? (landingPage.payment_type || 'bank') : 'bank'; %>
+        <% if (navPayType === 'cod') { %>
+          <a href="#landingCheckout" class="navbar__cta">اطلب الآن</a>
+        <% } else { %>
+          <a href="/product/<%= typeof product !== 'undefined' && product ? product.slug : '' %>/checkout" class="navbar__cta">اطلب الآن</a>
+        <% } %>
+      </div>
+    </div>
+  </nav>
+  <% } %>
+
+  <!-- Background Audio -->
+  <% if (landingPage.bg_audio_enabled && landingPage.bg_audio_filename) { %>
+    <audio id="bgAudio" preload="auto" loop>
+      <source src="/uploads/landing-pages/<%= landingPage.bg_audio_filename %>" type="audio/mpeg">
+    </audio>
+    <button type="button" class="bg-audio-control" id="bgAudioBtn" onclick="toggleBgAudio()" title="صوت الخلفية">🔇</button>
+  <% } %>
+
+  <!-- Landing Page Sections -->
+  <div class="landing-sections" style="padding-top: <%= landingPage.hide_header ? '16' : '80' %>px;">
+    <% if (typeof sections !== 'undefined' && sections && sections.length > 0) { %>
+      <% sections.forEach(function(section) { %>
+        <% if (!section.is_visible) return; %>
+
+        <% if (section.section_type === 'text') { %>
+          <!-- Text Section -->
+          <section class="lp-section" style="padding: 40px 0;">
+            <div class="container" style="max-width: 900px;">
+              <% if (section.title) { %>
+                <h2 style="font-size: 28px; font-weight: 800; color: var(--color-primary-dark); margin-bottom: 16px; text-align: center;"><%= section.title %></h2>
+              <% } %>
+              <% if (section.content) { %>
+                <div style="font-size: 16px; line-height: 2; color: var(--color-text); white-space: pre-line;"><%= section.content %></div>
+              <% } %>
+            </div>
+          </section>
+
+        <% } else if (section.section_type === 'image' || section.section_type === 'gif') { %>
+          <!-- Image/GIF Section -->
+          <section class="lp-section" style="padding: 0; margin: 0;">
+            <% var imgFullWidth = section.full_width; %>
+            <div style="<%= imgFullWidth ? '' : 'max-width: 900px; margin: 0 auto; padding: 0 16px;' %>">
+              <% if (section.title) { %>
+                <h2 style="font-size: 24px; font-weight: 800; color: var(--color-primary-dark); margin-bottom: 12px; text-align: center; padding-top: 24px; <%= imgFullWidth ? 'padding-left:16px; padding-right:16px;' : '' %>"><%= section.title %></h2>
+              <% } %>
+              <% if (section.media_filename) { %>
+                <img src="/uploads/landing-pages/<%= section.media_filename %>" alt="<%= section.title || '' %>"
+                  style="width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy">
+              <% } %>
+              <% if (section.content) { %>
+                <p style="font-size: 15px; color: var(--color-text-secondary); text-align: center; margin-top: 12px; padding: 0 16px 16px;"><%= section.content %></p>
+              <% } %>
+            </div>
+          </section>
+
+        <% } else if (section.section_type === 'video') { %>
+          <!-- Video Section -->
+          <section class="lp-section" style="padding: 20px 0;">
+            <div style="max-width: 900px; margin: 0 auto; padding: 0 16px;">
+              <% if (section.title) { %>
+                <h2 style="font-size: 24px; font-weight: 800; color: var(--color-primary-dark); margin-bottom: 12px; text-align: center;"><%= section.title %></h2>
+              <% } %>
+              <% if (section.video_url) { %>
+                <%
+                  var videoUrl = section.video_url || '';
+                  var ytMatch = videoUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+                  var ytId = ytMatch ? ytMatch[1] : '';
+                %>
+                <% if (ytId) { %>
+                  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: var(--radius-md); box-shadow: var(--shadow-md);">
+                    <iframe src="https://www.youtube.com/embed/<%= ytId %>?rel=0<%= section.autoplay ? '&autoplay=1' : '' %><%= section.muted ? '&mute=1' : '' %><%= section.loop_video ? '&loop=1&playlist=' + ytId : '' %>"
+                      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" allowfullscreen allow="autoplay"></iframe>
+                  </div>
+                <% } %>
+              <% } else if (section.media_filename) { %>
+                <video <%= section.autoplay ? 'autoplay' : '' %> <%= section.muted ? 'muted' : '' %> <%= section.loop_video ? 'loop' : '' %> controls playsinline
+                  style="width: 100%; border-radius: var(--radius-md); box-shadow: var(--shadow-md);" loading="lazy">
+                  <source src="/uploads/landing-pages/<%= section.media_filename %>" type="video/mp4">
+                </video>
+              <% } %>
+              <% if (section.content) { %>
+                <p style="font-size: 15px; color: var(--color-text-secondary); text-align: center; margin-top: 12px;"><%= section.content %></p>
+              <% } %>
+            </div>
+          </section>
+
+        <% } else if (section.section_type === 'button') { %>
+          <!-- Button Section -->
+          <% var payType = typeof landingPage !== 'undefined' ? (landingPage.payment_type || 'bank') : 'bank'; %>
+          <% var btnColor = section.button_color || 'var(--color-primary)'; %>
+          <% var btnSize = section.button_size || 'medium'; %>
+          <% var btnText = section.title || (section.button_type === 'add_to_cart' ? 'أضف للسلة 🛒' : 'اشترِ الآن 🛍️'); %>
+          <section class="lp-section" style="padding: 24px 0; text-align: center;">
+            <div class="container">
+              <% if (section.button_type === 'add_to_cart') { %>
+                <button type="button" class="btn lp-btn-<%= btnSize %>" onclick="lpAddToCart()" style="background: <%= btnColor %>; color: #fff; border: none; border-radius: 50px; font-family: var(--font-body); font-weight: 800; cursor: pointer; display: inline-block; text-align: center;">
+                  <%= btnText %>
+                </button>
+              <% } else { %>
+                <% if (payType === 'cod') { %>
+                  <a href="#landingCheckout" class="btn lp-btn-<%= btnSize %>" style="background: <%= btnColor %>; color: #fff; border-radius: 50px; font-weight: 800; display: inline-block; text-decoration: none; text-align: center;">
+                    <%= btnText %>
+                  </a>
+                <% } else { %>
+                  <a href="/product/<%= typeof product !== 'undefined' && product ? product.slug : '' %>/checkout" class="btn lp-btn-<%= btnSize %>" style="background: <%= btnColor %>; color: #fff; border-radius: 50px; font-weight: 800; display: inline-block; text-decoration: none; text-align: center;">
+                    <%= btnText %>
+                  </a>
+                <% } %>
+              <% } %>
+            </div>
+          </section>
+        <% } %>
+
+      <% }); %>
+    <% } %>
+  </div>
+
+  <!-- Landing Page Checkout Form -->
+  <% if (typeof product !== 'undefined' && product) { %>
+  <% var paymentType = landingPage.payment_type || 'bank'; %>
+  <% if (paymentType === 'cod') { %>
+  <!-- COD: Show form directly in landing page -->
+  <section id="landingCheckout" class="lp-section" style="padding: 60px 0; background: var(--color-bg-warm);">
+    <div class="container" style="max-width: 600px;">
+      <div class="section-header" style="margin-bottom: 30px;">
+        <span class="section-header__label">اطلب الآن</span>
+        <h2 class="section-header__title"><%= product.title %></h2>
+        <div class="section-header__divider"></div>
+        <div style="text-align: center; margin-top: 12px;">
+          <span style="font-size: 28px; font-weight: 800; color: var(--color-primary);"><%= product.price %> درهم</span>
+          <% if (product.old_price && product.old_price > product.price) { %>
+            <span style="font-size: 16px; color: var(--color-text-muted); text-decoration: line-through; margin-right: 8px;"><%= product.old_price %> درهم</span>
+          <% } %>
+        </div>
+      </div>
+
+      <div class="feedback-card" style="padding: 30px;">
+        <form id="landingOrderForm" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="lpFullName"><span class="required">*</span> 👤 الاسم الكامل</label>
+            <input type="text" id="lpFullName" name="fullName" class="form-input" placeholder="أدخل اسمك الكامل" required>
+            <div class="form-error"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lpPhone"><span class="required">*</span> 📱 رقم الهاتف</label>
+            <input type="tel" id="lpPhone" name="phone" class="form-input" placeholder="0612345678" required dir="ltr" style="text-align: left;">
+            <div class="form-error"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">📦 الكمية</label>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div class="qty-control" style="display: flex; align-items: center;">
+                <button type="button" onclick="lpQtyChange(-1)" style="width: 36px; height: 36px; border: 1px solid var(--color-border); background: var(--color-card); border-radius: var(--radius-sm) 0 0 var(--radius-sm); cursor: pointer; font-size: 18px; font-weight: 700;">-</button>
+                <div id="lpQtyValue" style="width: 44px; height: 36px; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; font-weight: 700; background: var(--color-bg);">1</div>
+                <button type="button" onclick="lpQtyChange(1)" style="width: 36px; height: 36px; border: 1px solid var(--color-border); background: var(--color-card); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; cursor: pointer; font-size: 18px; font-weight: 700;">+</button>
+              </div>
+              <span id="lpTotalPrice" style="font-size: 18px; font-weight: 700; color: var(--color-primary);"><%= product.price %> درهم</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lpCity"><span class="required">*</span> 🏙️ المدينة</label>
+            <input type="text" id="lpCity" name="city" class="form-input" placeholder="الدار البيضاء، الرباط..." required>
+            <div class="form-error"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="lpAddress"><span class="required">*</span> 📍 العنوان</label>
+            <textarea id="lpAddress" name="address" class="form-input form-textarea" placeholder="العنوان الكامل للتوصيل..." rows="2" required></textarea>
+            <div class="form-error"></div>
+          </div>
+          <button type="submit" class="btn btn--primary btn--lg btn--full" id="lpSubmitBtn" style="margin-top: 20px;">تأكيد الطلب</button>
+        </form>
+      </div>
+    </div>
+  </section>
+  <% } else { %>
+  <!-- Bank: Just show a CTA section that links to checkout -->
+  <section id="landingCheckout" class="lp-section" style="padding: 60px 0; background: var(--color-bg-warm);">
+    <div class="container" style="max-width: 600px; text-align: center;">
+      <div class="section-header" style="margin-bottom: 30px;">
+        <span class="section-header__label">اطلب الآن</span>
+        <h2 class="section-header__title"><%= product.title %></h2>
+        <div class="section-header__divider"></div>
+        <div style="text-align: center; margin-top: 12px;">
+          <span style="font-size: 28px; font-weight: 800; color: var(--color-primary);"><%= product.price %> درهم</span>
+          <% if (product.old_price && product.old_price > product.price) { %>
+            <span style="font-size: 16px; color: var(--color-text-muted); text-decoration: line-through; margin-right: 8px;"><%= product.old_price %> درهم</span>
+          <% } %>
+        </div>
+      </div>
+      <a href="/product/<%= product.slug %>/checkout" class="btn btn--primary btn--lg" style="padding: 16px 48px; font-size: 18px;">
+        اطلب الآن — اكمل عملية الشراء 🛍️
+      </a>
+    </div>
+  </section>
+  <% } %>
+  <% } %>
+
+  <!-- Reviews / Feedback Section -->
+  <% if (landingPage.show_reviews && typeof lpReviews !== 'undefined' && lpReviews && lpReviews.length > 0) { %>
+  <style>
+    .lp-rv-card { background: var(--color-card); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--color-border-light); }
+    .lp-rv-card[dir="ltr"] { direction: ltr; text-align: left; }
+    .lp-rv-card[dir="rtl"] { direction: rtl; text-align: right; }
+    .lp-rv-card__hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .lp-rv-card__av { width: 44px; height: 44px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; text-transform: uppercase; }
+    .lp-rv-card__nm { font-size: 15px; font-weight: 700; color: var(--color-text); }
+    .lp-rv-card__vf { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; margin-inline-start: 4px; vertical-align: middle; }
+    .lp-rv-card__vf svg { width: 18px; height: 18px; }
+    .lp-rv-card__body { min-height: 32px; margin-bottom: 10px; }
+    .lp-rv-card__txt { font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); margin: 0; }
+    .lp-rv-card__imgs { display: flex; gap: 10px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+    .lp-rv-card__imgs::-webkit-scrollbar { display: none; }
+    .lp-rv-card__imgs img { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--color-border-light); cursor: pointer; transition: transform 0.2s; }
+    .lp-rv-card__imgs img:hover { transform: scale(1.05); }
+    .lp-rv-card__stars { color: var(--color-star, #F5A623); font-size: 18px; letter-spacing: 2px; }
+    @media (max-width: 600px) {
+      .lp-rv-card { padding: 14px 16px; border-radius: 12px; }
+      .lp-rv-card__av { width: 38px; height: 38px; font-size: 17px; }
+      .lp-rv-card__nm { font-size: 14px; }
+      .lp-rv-card__txt { font-size: 13px; }
+      .lp-rv-card__imgs img { width: 90px; height: 90px; }
+    }
+  </style>
+  <section class="lp-section" style="padding: 60px 0; background: var(--color-bg-warm);">
+    <div class="container" style="max-width: 700px;">
+      <div class="section-header" style="margin-bottom: 30px;">
+        <span class="section-header__label">آراء العملاء</span>
+        <h2 class="section-header__title">ماذا يقول عملاؤنا</h2>
+        <div class="section-header__divider"></div>
+        <% if (typeof lpAvgRating !== 'undefined') { %>
+        <div style="text-align: center; margin-top: 12px;">
+          <span style="font-size: 28px; color: #f5a623; letter-spacing: 2px;">
+            <% for (var si = 1; si <= 5; si++) { %><%= si <= Math.round(parseFloat(lpAvgRating)) ? '★' : '☆' %><% } %>
+          </span>
+          <span style="font-size: 14px; color: var(--color-text-muted); margin-right: 8px;">(<%= lpReviewCount %> تقييم)</span>
+        </div>
+        <% } %>
+      </div>
+      <% lpReviews.forEach(function(review) { %>
+        <%
+          var _lpImgs = [];
+          if (review.image_filename) {
+            try { _lpImgs = JSON.parse(review.image_filename); } catch(e) { _lpImgs = [review.image_filename]; }
+            _lpImgs = _lpImgs.filter(function(img) { return !!img; });
+          }
+          var _lpInit = (review.name || '?').charAt(0).toUpperCase();
+          var _lpText = (review.name || '') + ' ' + (review.message || '');
+          var _lpIsAr = /[\u0600-\u06FF]/.test(_lpText);
+          var _lpDir = _lpIsAr ? 'rtl' : 'ltr';
+        %>
+        <div class="lp-rv-card" dir="<%= _lpDir %>">
+          <div class="lp-rv-card__hdr">
+            <div class="lp-rv-card__av"><%= _lpInit %></div>
+            <div>
+              <span class="lp-rv-card__nm"><%= review.name %></span>
+              <span class="lp-rv-card__vf"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#1DA1F2"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            </div>
+          </div>
+          <div class="lp-rv-card__body">
+            <% if (review.message) { %><p class="lp-rv-card__txt"><%= review.message %></p><% } %>
+            <% if (review.audio_filename && review.audio_filename.length > 0) { %>
+              <div class="wa-audio-player" data-src="/uploads/reviews/<%= review.audio_filename %>" style="margin-top: 6px;">
+                <button type="button" class="wa-play-btn" onclick="toggleWaAudio(this)">▶</button>
+                <div class="wa-progress-wrap" onclick="seekWaAudio(event, this)"><div class="wa-waveform"></div></div>
+                <span class="wa-time">0:00</span>
+              </div>
+            <% } %>
+          </div>
+          <% if (_lpImgs.length > 0) { %>
+            <div class="lp-rv-card__imgs">
+              <% _lpImgs.forEach(function(img) { %><img src="/uploads/reviews/<%= img %>" alt="" loading="lazy"><% }); %>
+            </div>
+          <% } %>
+          <div class="lp-rv-card__stars"><% for (var ri = 1; ri <= 5; ri++) { %><%= ri <= review.rating ? '★' : '☆' %><% } %></div>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">جاري معالجة طلبك...</div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <!-- Sticky Buy Button -->
+  <% if (typeof product !== 'undefined' && product) { %>
+  <div id="stickyBuyBtn" style="position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 999; display: flex; align-items: center; justify-content: center; gap: 12px;">
+    <span style="font-size: 20px; font-weight: 800; color: var(--color-primary);"><%= product.price %> درهم</span>
+    <% var lpPayType = typeof landingPage !== 'undefined' ? (landingPage.payment_type || 'bank') : 'bank'; %>
+    <% if (lpPayType === 'cod') { %>
+      <a href="#landingCheckout" class="btn btn--primary" style="padding: 12px 32px; font-size: 16px; font-weight: 700;">اطلب الآن 🛒</a>
+    <% } else { %>
+      <a href="/product/<%= product.slug %>/checkout" class="btn btn--primary" style="padding: 12px 32px; font-size: 16px; font-weight: 700;">اطلب الآن 🛒</a>
+    <% } %>
+  </div>
+  <% } %>
+
+  <script>
+    var LP_PRICE = <%= typeof product !== 'undefined' && product ? product.price : 0 %>;
+    var LP_PRODUCT_SLUG = '<%= typeof product !== 'undefined' && product ? product.slug : '' %>';
+    var LP_PRODUCT_ID = '<%= typeof product !== 'undefined' && product ? product.id : '' %>';
+
+    function lpQtyChange(delta) {
+      var el = document.getElementById('lpQtyValue');
+      if (!el) return;
+      var qty = parseInt(el.textContent) || 1;
+      qty += delta;
+      if (qty < 1) qty = 1;
+      if (qty > 10) qty = 10;
+      el.textContent = qty;
+      var totalEl = document.getElementById('lpTotalPrice');
+      if (totalEl) totalEl.textContent = (qty * LP_PRICE) + ' درهم';
+    }
+
+    // Add to cart from landing page button
+    function lpAddToCart() {
+      if (!LP_PRODUCT_ID) return;
+      fetch('/api/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId: LP_PRODUCT_ID, quantity: 1 })
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.success) {
+          var badge = document.getElementById('cartBadge');
+          if (badge) { badge.textContent = data.cartCount || '1'; badge.style.display = 'flex'; }
+          if (typeof showToast === 'function') showToast('تمت الاضافة للسلة', 'success');
+        }
+      });
+    }
+
+    // Background audio control
+    function toggleBgAudio() {
+      var audio = document.getElementById('bgAudio');
+      var btn = document.getElementById('bgAudioBtn');
+      if (!audio) return;
+      if (audio.paused) {
+        audio.volume = 0.3;
+        audio.play().then(function() { btn.textContent = '🔊'; });
+      } else {
+        audio.pause();
+        btn.textContent = '🔇';
+      }
+    }
+
+    // Auto-start background audio on first user interaction
+    <% if (landingPage.bg_audio_enabled && landingPage.bg_audio_filename) { %>
+    (function() {
+      var started = false;
+      function startBgAudio() {
+        if (started) return;
+        started = true;
+        var audio = document.getElementById('bgAudio');
+        var btn = document.getElementById('bgAudioBtn');
+        if (audio) {
+          audio.volume = 0.15;
+          audio.play().then(function() { if (btn) btn.textContent = '🔊'; }).catch(function() {});
+        }
+        document.removeEventListener('click', startBgAudio);
+        document.removeEventListener('scroll', startBgAudio);
+        document.removeEventListener('touchstart', startBgAudio);
+      }
+      document.addEventListener('click', startBgAudio, { once: true });
+      document.addEventListener('scroll', startBgAudio, { once: true });
+      document.addEventListener('touchstart', startBgAudio, { once: true });
+    })();
+    <% } %>
+
+    // Fade-in animation on scroll (Intersection Observer)
+    document.addEventListener('DOMContentLoaded', function() {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+      document.querySelectorAll('.lp-section').forEach(function(el) { observer.observe(el); });
+    });
+
+    // COD Form submission
+    document.addEventListener('DOMContentLoaded', function() {
+      var form = document.getElementById('landingOrderForm');
+      if (!form) return;
+      var isSubmitting = false;
+
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (isSubmitting) return;
+
+        document.querySelectorAll('.form-input--error').forEach(function(el) { el.classList.remove('form-input--error'); });
+        document.querySelectorAll('.form-error').forEach(function(el) { el.classList.remove('visible'); });
+
+        var fullName = document.getElementById('lpFullName');
+        var phone = document.getElementById('lpPhone');
+        var city = document.getElementById('lpCity');
+        var address = document.getElementById('lpAddress');
+        var isValid = true;
+
+        if (!fullName.value.trim()) { showFieldError(fullName, 'يرجى إدخال الاسم'); isValid = false; }
+        if (!phone.value.trim()) { showFieldError(phone, 'يرجى إدخال رقم الهاتف'); isValid = false; }
+        if (city && !city.value.trim()) { showFieldError(city, 'يرجى إدخال المدينة'); isValid = false; }
+        if (address && !address.value.trim()) { showFieldError(address, 'يرجى إدخال العنوان'); isValid = false; }
+
+        if (!isValid) { if (typeof showToast === 'function') showToast('يرجى تعبئة جميع الحقول المطلوبة', 'error'); return; }
+
+        isSubmitting = true;
+        var submitBtn = document.getElementById('lpSubmitBtn');
+        if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'جاري الإرسال...'; }
+        if (typeof showLoading === 'function') showLoading();
+
+        var qty = parseInt(document.getElementById('lpQtyValue').textContent) || 1;
+        var formData = new FormData();
+        formData.append('fullName', fullName.value.trim());
+        formData.append('phone', phone.value.trim());
+        formData.append('quantity', qty);
+        formData.append('payment_type', 'cod');
+        formData.append('city', city.value.trim());
+        formData.append('address', address.value.trim());
+
+        fetch('/product/' + LP_PRODUCT_SLUG + '/order', { method: 'POST', body: formData })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.success) {
+            sessionStorage.setItem('orderRef', data.orderRef);
+            window.location.href = '/thankyou';
+          } else {
+            if (typeof hideLoading === 'function') hideLoading();
+            isSubmitting = false;
+            if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'تأكيد الطلب'; }
+            if (typeof showToast === 'function') showToast(data.error || 'حدث خطأ', 'error');
+          }
+        })
+        .catch(function(err) {
+          if (typeof hideLoading === 'function') hideLoading();
+          isSubmitting = false;
+          if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'تأكيد الطلب'; }
+          if (typeof showToast === 'function') showToast('حدث خطأ في الاتصال', 'error');
+        });
+      });
+    });
+  </script>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

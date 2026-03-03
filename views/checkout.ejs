@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%= t('checkout') %> — <%= typeof product !== 'undefined' && product ? product.title : (typeof siteName !== 'undefined' ? siteName : 'متجرنا') %></title>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner">
+        <div class="navbar__brand">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <div class="checkout-header__steps">
+          <div class="checkout-header__step checkout-header__step--active">
+            <span class="checkout-header__step-num">1</span>
+            <span><%= t('info') %></span>
+          </div>
+          <span class="checkout-header__step-arrow">←</span>
+          <div class="checkout-header__step">
+            <span class="checkout-header__step-num">2</span>
+            <span><%= t('payment') %></span>
+          </div>
+          <span class="checkout-header__step-arrow">←</span>
+          <div class="checkout-header__step">
+            <span class="checkout-header__step-num">3</span>
+            <span><%= t('confirmation') %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Checkout Page -->
+  <div class="checkout-page">
+    <div class="container">
+      <div class="checkout__grid">
+
+        <!-- Form Side -->
+        <div class="checkout-form">
+          <form id="checkoutForm" novalidate>
+
+            <!-- Hidden fields for mode -->
+            <input type="hidden" id="checkoutMode" value="<%= typeof checkoutMode !== 'undefined' ? checkoutMode : 'single' %>">
+            <% if (typeof product !== 'undefined' && product) { %>
+              <input type="hidden" id="productSlug" value="<%= product.slug %>">
+              <input type="hidden" id="productId" value="<%= product.id %>">
+            <% } %>
+
+            <!-- Section 1: Contact & Delivery Info -->
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">📋</span>
+                <%= t('contact_delivery_info') %>
+              </h2>
+
+              <div class="form-group">
+                <input type="text" id="fullName" name="fullName" class="form-input" placeholder="<%= t('full_name') %>" required>
+                <div class="form-error" id="nameError"></div>
+              </div>
+
+              <div class="form-group">
+                <input type="tel" id="phone" name="phone" class="form-input" placeholder="<%= t('phone') %>" required dir="ltr" style="text-align: left;">
+                <div class="form-error" id="phoneError"></div>
+              </div>
+
+              <!-- Delivery fields (city + address) — shown for all payment types -->
+              <div id="codAddressFields">
+                <div class="form-group">
+                  <input type="text" id="city" name="city" class="form-input" placeholder="<%= t('city') %>">
+                  <div class="form-error" id="cityError"></div>
+                </div>
+                <div class="form-group">
+                  <textarea id="address" name="address" class="form-input form-textarea" placeholder="<%= t('address') %>" rows="2"></textarea>
+                  <div class="form-error" id="addressError"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Variation Selection (single product mode with variations) -->
+            <% if (typeof product !== 'undefined' && product && typeof sizeVariations !== 'undefined' && sizeVariations && sizeVariations.length > 0) { %>
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">📐</span>
+                <%= t('choose_size') %>
+              </h2>
+              <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                <% sizeVariations.forEach(function(v, idx) { %>
+                  <button type="button" class="variation-btn checkout-size-btn<%= idx === 0 ? ' active' : '' %>"
+                    data-variation-id="<%= v.id %>"
+                    data-price-adjustment="<%= v.price_adjustment %>"
+                    data-label="<%= v.label %>"
+                    onclick="selectCheckoutSize(this)"
+                    style="
+                      padding: 10px 20px; border-radius: var(--radius-md); border: 2px solid var(--color-border);
+                      background: var(--color-card); cursor: pointer; font-family: var(--font-body);
+                      font-size: 14px; font-weight: 600; color: var(--color-text);
+                      transition: var(--transition-fast);
+                    "><%= v.label %>
+                    <% if (v.price_adjustment > 0) { %><span style="font-size: 11px; color: var(--color-text-muted);"> (+<%= v.price_adjustment %>)</span><% } %>
+                    <% if (v.price_adjustment < 0) { %><span style="font-size: 11px; color: var(--color-success);"> (<%= v.price_adjustment %>)</span><% } %>
+                  </button>
+                <% }); %>
+              </div>
+            </div>
+            <% } %>
+
+            <% if (typeof product !== 'undefined' && product && typeof colorVariations !== 'undefined' && colorVariations && colorVariations.length > 0) { %>
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">🎨</span>
+                <%= t('choose_color') %>
+              </h2>
+              <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <% colorVariations.forEach(function(v, idx) { %>
+                  <button type="button" class="variation-btn checkout-color-btn<%= idx === 0 ? ' active' : '' %>"
+                    data-variation-id="<%= v.id %>"
+                    data-price-adjustment="<%= v.price_adjustment %>"
+                    data-label="<%= v.label %>"
+                    onclick="selectCheckoutColor(this)"
+                    title="<%= v.label %>"
+                    style="
+                      width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--color-border);
+                      cursor: pointer; padding: 0; overflow: hidden;
+                      transition: var(--transition-fast);
+                      <% if (v.image_filename) { %>
+                        background-image: url('/uploads/variations/<%= v.image_filename %>');
+                        background-size: cover; background-position: center;
+                      <% } else if (v.value) { %>
+                        background-color: <%= v.value %>;
+                      <% } else { %>
+                        background-color: #ccc;
+                      <% } %>
+                    ">
+                  </button>
+                <% }); %>
+              </div>
+              <div id="checkoutColorLabel" style="margin-top: 6px; font-size: 13px; color: var(--color-text-secondary);">
+                <% if (colorVariations.length > 0) { %><%= colorVariations[0].label %><% } %>
+              </div>
+            </div>
+            <% } %>
+
+            <!-- Section 2: Quantity (single product mode) -->
+            <% if (typeof checkoutMode === 'undefined' || checkoutMode === 'single') { %>
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">📦</span>
+                <%= t('quantity') %>
+              </h2>
+
+              <div class="form-group">
+                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                  <div class="qty-control">
+                    <button type="button" class="qty-control__btn" id="qtyMinus">−</button>
+                    <div class="qty-control__value" id="qtyValue">1</div>
+                    <button type="button" class="qty-control__btn" id="qtyPlus">+</button>
+                  </div>
+                  <div class="qty-control__price" id="qtyPrice"><%= typeof product !== 'undefined' && product ? product.price : 0 %> <%= t('currency') %></div>
+                </div>
+                <div class="qty-control__detail" id="qtyDetail" style="display: none;">
+                  <span id="qtyCalc"></span>
+                </div>
+              </div>
+            </div>
+            <% } %>
+
+            <!-- Section 3: Payment Options -->
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">💳</span>
+                <%= t('payment_delivery_option') %>
+              </h2>
+
+              <div class="delivery-options" id="paymentOptions">
+                <%
+                  // Determine which payment options to show
+                  var showCod = false;
+                  var showBankFull = true;
+                  var showBankDeposit = true;
+
+                  if (typeof product !== 'undefined' && product) {
+                    showCod = product.cod_enabled == 1;
+                    showBankFull = product.bank_full_enabled == 1;
+                    showBankDeposit = product.bank_deposit_enabled == 1;
+                  } else if (typeof checkoutMode !== 'undefined' && checkoutMode === 'cart') {
+                    // For cart mode, check if any product has COD
+                    showCod = typeof cartHasCod !== 'undefined' && cartHasCod;
+                  }
+
+                  // Determine default checked
+                  var defaultPayment = '';
+                  if (showCod) defaultPayment = 'cod';
+                  else if (showBankFull) defaultPayment = 'bank_full';
+                  else if (showBankDeposit) defaultPayment = 'bank_deposit';
+                %>
+
+                <!-- COD Option -->
+                <% if (showCod) { %>
+                <label class="delivery-option">
+                  <input type="radio" name="paymentType" value="cod" <%= defaultPayment === 'cod' ? 'checked' : '' %>>
+                  <div class="delivery-option__card">
+                    <div class="delivery-option__radio"></div>
+                    <div class="delivery-option__content">
+                      <div class="delivery-option__title"><%= t('cod_title') %></div>
+                      <div class="delivery-option__desc">
+                        <%= t('cod_desc') %>. <strong><%= t('no_receipt_needed') %></strong>.
+                      </div>
+                      <div class="delivery-option__meta">🚚 <%= t('delivery_24_48') %></div>
+                    </div>
+                    <div class="delivery-option__price" id="codPrice"><%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %> <%= t('currency') %></div>
+                  </div>
+                </label>
+                <% } %>
+
+                <!-- Full Payment Option -->
+                <% if (showBankFull) { %>
+                <label class="delivery-option">
+                  <input type="radio" name="paymentType" value="bank_full" <%= defaultPayment === 'bank_full' ? 'checked' : '' %>>
+                  <div class="delivery-option__card">
+                    <div class="delivery-option__radio"></div>
+                    <div class="delivery-option__content">
+                      <div class="delivery-option__title"><%= t('bank_full_title') %></div>
+                      <div class="delivery-option__desc">
+                        <%= t('bank_full_desc') %> <strong><%= t('free_delivery') %></strong> <%= t('same_day') %>
+                      </div>
+                      <div class="delivery-option__meta">🎁 <%= t('free_delivery') %> — <%= t('same_day') %></div>
+                    </div>
+                    <div class="delivery-option__price" id="fullPrice"><%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %> <%= t('currency') %></div>
+                  </div>
+                </label>
+                <% } %>
+
+                <!-- Deposit Option -->
+                <% if (showBankDeposit) { %>
+                <label class="delivery-option">
+                  <input type="radio" name="paymentType" value="bank_deposit" <%= defaultPayment === 'bank_deposit' ? 'checked' : '' %>>
+                  <div class="delivery-option__card">
+                    <div class="delivery-option__radio"></div>
+                    <div class="delivery-option__content">
+                      <div class="delivery-option__title"><%= t('deposit_title') %></div>
+                      <div class="delivery-option__desc">
+                        <%= t('pay') %> <strong><%= typeof product !== 'undefined' && product ? product.deposit_amount : 50 %> <%= t('currency') %></strong> <%= t('as_deposit') %> + <strong><%= t('delivery_fee') %> <%= typeof product !== 'undefined' && product ? (product.delivery_fee || 50) : 50 %> <%= t('currency') %></strong>.
+                        <%= t('remaining_on_delivery') %>: <strong id="depositRemainingInline"><%= typeof product !== 'undefined' && product ? (product.price - product.deposit_amount) : '' %> <%= t('currency') %></strong>
+                      </div>
+                      <div class="delivery-option__meta">⏰ <%= t('delivery_within_48') %> — <%= t('delivery_fee') %> <%= typeof product !== 'undefined' && product ? (product.delivery_fee || 50) : 50 %> <%= t('currency') %></div>
+                    </div>
+                    <div class="delivery-option__price" id="depositPrice"><%= typeof product !== 'undefined' && product ? product.deposit_amount : 50 %> <%= t('currency') %></div>
+                  </div>
+                </label>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Section 4: Bank Transfer Details (hidden for COD) -->
+            <div class="form-section" id="bankDetailsSection">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">🏦</span>
+                <%= t('bank_transfer') %>
+              </h2>
+
+              <div class="bank-transfer-amount">
+                <span class="bank-transfer-amount__label"><%= t('amount_to_transfer') %></span>
+                <span class="bank-transfer-amount__value" id="bankAmount"><%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %> <%= t('currency') %></span>
+              </div>
+
+              <div class="bank-details">
+                <% if (typeof bankSettings !== 'undefined' && bankSettings && bankSettings.length > 0) { %>
+                  <% bankSettings.forEach(function(bank) { %>
+                    <div class="bank-detail">
+                      <span class="bank-detail__label"><%= t('bank_name') %></span>
+                      <span class="bank-detail__value"><%= bank.bank_name %></span>
+                    </div>
+                    <div class="bank-detail">
+                      <span class="bank-detail__label"><%= t('account_holder') %></span>
+                      <span class="bank-detail__value">
+                        <%= bank.account_holder %>
+                        <button type="button" class="bank-detail__copy" data-value="<%= bank.account_holder %>" title="<%= t('copy') %>">📋</button>
+                      </span>
+                    </div>
+                    <div class="bank-detail">
+                      <span class="bank-detail__label"><%= t('account_number_rib') %></span>
+                      <span class="bank-detail__value">
+                        <%= bank.rib %>
+                        <button type="button" class="bank-detail__copy" data-value="<%= bank.rib.replace(/\s/g, '') %>" title="<%= t('copy') %>">📋</button>
+                      </span>
+                    </div>
+                  <% }); %>
+                <% } else { %>
+                  <div class="bank-detail">
+                    <span class="bank-detail__label"><%= t('bank_name') %></span>
+                    <span class="bank-detail__value">CIH Bank</span>
+                  </div>
+                  <div class="bank-detail">
+                    <span class="bank-detail__label"><%= t('account_holder') %></span>
+                    <span class="bank-detail__value">
+                      متجرنا SARL
+                      <button type="button" class="bank-detail__copy" data-value="متجرنا SARL" title="<%= t('copy') %>">📋</button>
+                    </span>
+                  </div>
+                  <div class="bank-detail">
+                    <span class="bank-detail__label"><%= t('account_number_rib') %></span>
+                    <span class="bank-detail__value">
+                      230 780 0118274000 68 30
+                      <button type="button" class="bank-detail__copy" data-value="230780011827400006830" title="<%= t('copy') %>">📋</button>
+                    </span>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Section 5: Receipt Upload (hidden for COD) -->
+            <div class="form-section" id="receiptSection">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">📤</span>
+                <%= t('upload_receipt') %>
+              </h2>
+
+              <div class="form-group">
+                <div class="upload-zone" id="uploadZone">
+                  <div class="upload-zone__icon">📤</div>
+                  <div class="upload-zone__text"><%= t('click_upload_receipt') %></div>
+                  <div class="upload-zone__hint">JPG, PNG, PDF — Max 10MB</div>
+                  <input type="file" id="receiptUpload" name="receipt" accept="image/*,.pdf">
+                </div>
+                <div class="upload-preview" id="uploadPreview">
+                  <img class="upload-preview__img" id="uploadPreviewImg" src="" alt="<%= t('receipt_preview') %>" style="display:none;">
+                  <div class="upload-preview__name" id="uploadPreviewName"></div>
+                  <button type="button" class="upload-preview__remove" id="uploadPreviewRemove">✕</button>
+                </div>
+                <div class="form-error" id="receiptError"><%= t('please_upload_receipt') %></div>
+              </div>
+            </div>
+
+            <% if (typeof checkoutDescription !== 'undefined' && checkoutDescription) { %>
+              <div style="background: var(--color-bg-warm); border-radius: 12px; padding: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.8; color: var(--color-text);">
+                <%- checkoutDescription %>
+              </div>
+            <% } %>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn--primary btn--lg btn--full" id="submitBtn">
+              <%= t('place_order') %>
+            </button>
+
+          </form>
+        </div>
+
+        <!-- Order Summary Sidebar -->
+        <div class="order-summary">
+          <h3 class="order-summary__title"><%= t('order_summary') %></h3>
+
+          <% if (typeof checkoutMode !== 'undefined' && checkoutMode === 'cart' && typeof cartItems !== 'undefined') { %>
+            <!-- Cart mode: show all items -->
+            <% cartItems.forEach(function(item) { %>
+            <div class="order-summary__product" style="margin-bottom: 12px;">
+              <% if (item.main_image) { %>
+                <img class="order-summary__product-img" src="/uploads/products/<%= item.main_image %>" alt="<%= item.title %>" style="width: 60px; height: 60px; object-fit: cover; border-radius: 10px;">
+              <% } else { %>
+                <div class="order-summary__product-img" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--color-bg-warm); border-radius: 10px;">🛍️</div>
+              <% } %>
+              <div class="order-summary__product-info">
+                <div class="order-summary__product-name" style="font-size: 14px;"><%= item.title %></div>
+                <% if (item.size_label) { %><div style="font-size: 11px; color: var(--color-text-muted);"><%= t('variations_size') %>: <%= item.size_label %></div><% } %>
+                <% if (item.color_label) { %><div style="font-size: 11px; color: var(--color-text-muted);"><%= t('variations_color') %>: <%= item.color_label %></div><% } %>
+                <div class="order-summary__product-qty"><%= t('quantity') %>: <%= item.quantity %> × <%= item.unit_price %> <%= t('currency') %></div>
+              </div>
+            </div>
+            <% }); %>
+
+            <% if (typeof giftProduct !== 'undefined' && giftProduct) { %>
+            <div class="order-summary__product" style="margin-bottom: 12px; padding: 8px; background: var(--color-success-light, #e8f5e9); border-radius: var(--radius-md); display: flex; align-items: center; gap: 10px;">
+              <% if (giftProduct.image_filename) { %>
+                <img src="/uploads/gifts/<%= giftProduct.image_filename %>" alt="<%= giftProduct.name %>" style="width: 48px; height: 48px; object-fit: cover; border-radius: 8px; flex-shrink: 0;">
+              <% } else { %>
+                <div style="font-size: 24px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: rgba(46,125,50,0.1); border-radius: 8px;">🎁</div>
+              <% } %>
+              <div class="order-summary__product-info" style="flex: 1;">
+                <div style="font-size: 13px; font-weight: 700; color: var(--color-success, #2e7d32);"><%= giftProduct.name %></div>
+                <div style="font-size: 11px; color: var(--color-success, #2e7d32);"><%= t('free_gift') %></div>
+              </div>
+              <div style="font-size: 14px; font-weight: 800; color: var(--color-success, #2e7d32); flex-shrink: 0;"><%= t('free') %></div>
+            </div>
+            <% } %>
+          <% } else if (typeof product !== 'undefined' && product) { %>
+            <!-- Single product mode -->
+            <div class="order-summary__product">
+              <% if (product.main_image) { %>
+                <img class="order-summary__product-img" src="/uploads/products/<%= product.main_image %>" alt="<%= product.title %>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px;">
+              <% } else if (product.video_filename) { %>
+                <img class="order-summary__product-img" src="/uploads/products/<%= product.video_filename.replace(/\.[^.]+$/, '.jpg') %>" alt="<%= product.title %>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px;" onerror="this.outerHTML='<div class=\'order-summary__product-img\'>🛍️</div>'">
+              <% } else { %>
+                <div class="order-summary__product-img">🛍️</div>
+              <% } %>
+              <div class="order-summary__product-info">
+                <div class="order-summary__product-name"><%= product.title %></div>
+                <div class="order-summary__product-variant" id="summaryVariant"><%= t('original_product') %></div>
+                <div class="order-summary__product-qty" id="summaryQty"><%= t('quantity') %>: 1</div>
+              </div>
+            </div>
+          <% } %>
+
+          <div class="order-summary__row" id="summaryQtyRow" style="display: none;">
+            <span class="order-summary__row-label" id="summaryQtyLabel"></span>
+            <span class="order-summary__row-value" id="summarySubtotal"></span>
+          </div>
+
+          <div class="order-summary__row">
+            <span class="order-summary__row-label" id="summaryOptionLabel"><%= t('payment_option') %></span>
+            <span class="order-summary__row-value" id="summaryOptionValue">—</span>
+          </div>
+
+          <div class="order-summary__row">
+            <span class="order-summary__row-label"><%= t('delivery') %></span>
+            <span class="order-summary__row-value" id="summaryDelivery" style="color: var(--color-success);">—</span>
+          </div>
+
+          <div class="order-summary__row" id="summaryDeliveryFeeRow" style="display: none;">
+            <span class="order-summary__row-label"><%= t('delivery_fee') %></span>
+            <span class="order-summary__row-value" id="summaryDeliveryFee"><%= typeof product !== 'undefined' && product ? (product.delivery_fee || 50) : 50 %> <%= t('currency') %></span>
+          </div>
+
+          <div class="order-summary__row order-summary__row--total">
+            <span class="order-summary__row-label"><%= t('amount_required') %></span>
+            <span class="order-summary__row-value" id="summaryTotal"><%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %> <%= t('currency') %></span>
+          </div>
+
+          <div class="order-summary__remaining" id="summaryRemaining" style="display: none;">
+            <%= t('remaining_on_delivery') %>: <strong id="summaryRemainingAmount">—</strong>
+          </div>
+
+          <div class="order-summary__secure">🔒 <%= t('secure_transaction') %></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text"><%= t('processing_order') %></div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <style>
+    .variation-btn.active {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 2px var(--color-primary-light);
+    }
+    .checkout-color-btn.active {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+      transform: scale(1.1);
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script>
+    var CHECKOUT_MODE = '<%= typeof checkoutMode !== 'undefined' ? checkoutMode : 'single' %>';
+    var UNIT_PRICE = <%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %>;
+    var DEPOSIT_AMOUNT = <%= typeof product !== 'undefined' && product ? product.deposit_amount : 50 %>;
+    var DELIVERY_FEE = <%= typeof product !== 'undefined' && product ? (product.delivery_fee || 50) : 50 %>;
+    var CART_TOTAL = <%= typeof cartTotal !== 'undefined' ? cartTotal : 0 %>;
+
+    // i18n strings for JS
+    var T_CURRENCY = '<%= t("currency") %>';
+    var T_QUANTITY = '<%= t("quantity") %>';
+    var T_SIZE = '<%= t("variations_size") %>';
+    var T_COLOR = '<%= t("variations_color") %>';
+    var T_ORIGINAL_PRODUCT = '<%= t("original_product") %>';
+    var T_PAYMENT_OPTION = '<%= t("payment_option") %>';
+    var T_COD_LABEL = '<%= t("cod") %>';
+    var T_DEPOSIT_LABEL = '<%= t("deposit") %>';
+    var T_FULL_PAYMENT = '<%= t("full_payment") %>';
+    var T_DELIVERY_24_48 = '<%= t("delivery_24_48") %>';
+    var T_WITHIN_48 = '<%= t("delivery_within_48") %>';
+    var T_FREE_DELIVERY_SAME_DAY = '<%= t("free_delivery_same_day") %>';
+    var T_REMAINING_ON_DELIVERY = '<%= t("remaining_on_delivery") %>';
+    var T_CLICK_UPLOAD_RECEIPT = '<%= t("click_upload_receipt") %>';
+    var T_FILE_SELECTED = '<%= t("file_selected") %>';
+    var T_SENDING_ORDER = '<%= t("sending_order") %>';
+    var T_PLACE_ORDER = '<%= t("place_order") %>';
+    var T_FILL_REQUIRED = '<%= t("fill_required_fields") %>';
+    var T_ENTER_NAME = '<%= t("enter_name") %>';
+    var T_ENTER_PHONE = '<%= t("enter_phone") %>';
+    var T_INVALID_PHONE = '<%= t("invalid_phone") %>';
+    var T_ENTER_CITY = '<%= t("enter_city") %>';
+    var T_ENTER_ADDRESS = '<%= t("enter_address") %>';
+    var T_CHOOSE_IMAGE_PDF = '<%= t("choose_image_pdf") %>';
+    var T_FILE_TOO_LARGE = '<%= t("file_too_large") %>';
+    var T_ERROR_OCCURRED = '<%= t("error_occurred") %>';
+    var T_CONNECTION_ERROR = '<%= t("connection_error") %>';
+
+    var selectedSizeId = null;
+    var selectedColorId = null;
+    var sizePriceAdj = 0;
+    var colorPriceAdj = 0;
+    var selectedSizeLabel = '';
+    var selectedColorLabel = '';
+
+    // Init default variation selections
+    (function() {
+      var firstSize = document.querySelector('.checkout-size-btn');
+      if (firstSize) {
+        selectedSizeId = parseInt(firstSize.dataset.variationId);
+        sizePriceAdj = parseFloat(firstSize.dataset.priceAdjustment) || 0;
+        selectedSizeLabel = firstSize.dataset.label || '';
+      }
+      var firstColor = document.querySelector('.checkout-color-btn');
+      if (firstColor) {
+        selectedColorId = parseInt(firstColor.dataset.variationId);
+        colorPriceAdj = parseFloat(firstColor.dataset.priceAdjustment) || 0;
+        selectedColorLabel = firstColor.dataset.label || '';
+      }
+    })();
+
+    function selectCheckoutSize(btn) {
+      document.querySelectorAll('.checkout-size-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedSizeId = parseInt(btn.dataset.variationId);
+      sizePriceAdj = parseFloat(btn.dataset.priceAdjustment) || 0;
+      selectedSizeLabel = btn.dataset.label || '';
+      updateAllPrices();
+    }
+
+    function selectCheckoutColor(btn) {
+      document.querySelectorAll('.checkout-color-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedColorId = parseInt(btn.dataset.variationId);
+      colorPriceAdj = parseFloat(btn.dataset.priceAdjustment) || 0;
+      selectedColorLabel = btn.dataset.label || '';
+      var label = document.getElementById('checkoutColorLabel');
+      if (label) label.textContent = btn.title;
+      updateAllPrices();
+    }
+  </script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+      var qtyValueEl = document.getElementById('qtyValue');
+      var qtyMinusBtn = document.getElementById('qtyMinus');
+      var qtyPlusBtn = document.getElementById('qtyPlus');
+      var qtyPriceEl = document.getElementById('qtyPrice');
+      var qtyDetailEl = document.getElementById('qtyDetail');
+      var qtyCalcEl = document.getElementById('qtyCalc');
+
+      var bankDetailsSection = document.getElementById('bankDetailsSection');
+      var receiptSection = document.getElementById('receiptSection');
+      var codAddressFields = document.getElementById('codAddressFields');
+
+      var summaryQtyEl = document.getElementById('summaryQty');
+      var summaryQtyRow = document.getElementById('summaryQtyRow');
+      var summaryQtyLabel = document.getElementById('summaryQtyLabel');
+      var summarySubtotal = document.getElementById('summarySubtotal');
+      var summaryOptionLabel = document.getElementById('summaryOptionLabel');
+      var summaryOptionValue = document.getElementById('summaryOptionValue');
+      var summaryDeliveryEl = document.getElementById('summaryDelivery');
+      var summaryDeliveryFeeRow = document.getElementById('summaryDeliveryFeeRow');
+      var summaryDeliveryFee = document.getElementById('summaryDeliveryFee');
+      var summaryTotalEl = document.getElementById('summaryTotal');
+      var summaryRemaining = document.getElementById('summaryRemaining');
+      var summaryRemainingAmount = document.getElementById('summaryRemainingAmount');
+      var summaryVariant = document.getElementById('summaryVariant');
+
+      var form = document.getElementById('checkoutForm');
+      var submitBtn = document.getElementById('submitBtn');
+      var loadingOverlay = document.getElementById('loadingOverlay');
+
+      var uploadInput = document.getElementById('receiptUpload');
+      var uploadZone = document.getElementById('uploadZone');
+      var uploadPreview = document.getElementById('uploadPreview');
+      var uploadPreviewImg = document.getElementById('uploadPreviewImg');
+      var uploadPreviewName = document.getElementById('uploadPreviewName');
+      var uploadPreviewRemove = document.getElementById('uploadPreviewRemove');
+
+      // Quantity buttons
+      if (qtyMinusBtn) {
+        qtyMinusBtn.addEventListener('click', function() {
+          var qty = parseInt(qtyValueEl.textContent) || 1;
+          if (qty > 1) { qty--; qtyValueEl.textContent = qty; updateAllPrices(); }
+        });
+      }
+      if (qtyPlusBtn) {
+        qtyPlusBtn.addEventListener('click', function() {
+          var qty = parseInt(qtyValueEl.textContent) || 1;
+          if (qty < 10) { qty++; qtyValueEl.textContent = qty; updateAllPrices(); }
+        });
+      }
+
+      // Payment type change
+      var paymentRadios = document.querySelectorAll('input[name="paymentType"]');
+      paymentRadios.forEach(function(radio) {
+        radio.addEventListener('change', function() { updateAllPrices(); });
+      });
+
+      // Master price update
+      window.updateAllPrices = function() {
+        var qty = qtyValueEl ? parseInt(qtyValueEl.textContent) || 1 : 1;
+        var basePrice = CHECKOUT_MODE === 'cart' ? CART_TOTAL : UNIT_PRICE;
+        var effectiveUnitPrice = UNIT_PRICE + sizePriceAdj + colorPriceAdj;
+        var totalProductPrice = CHECKOUT_MODE === 'cart' ? CART_TOTAL : (qty * effectiveUnitPrice);
+
+        var selectedPayment = document.querySelector('input[name="paymentType"]:checked');
+        var paymentType = selectedPayment ? selectedPayment.value : 'bank_full';
+        var isCod = paymentType === 'cod';
+        var isDeposit = paymentType === 'bank_deposit';
+        var bankTransferAmount = isDeposit ? DEPOSIT_AMOUNT : totalProductPrice;
+        var remainingAmount = isDeposit ? (totalProductPrice - DEPOSIT_AMOUNT + DELIVERY_FEE) : 0;
+
+        // Show/hide COD vs bank sections
+        if (bankDetailsSection) bankDetailsSection.style.display = isCod ? 'none' : '';
+        if (receiptSection) receiptSection.style.display = isCod ? 'none' : '';
+        // codAddressFields always visible — delivery fields shown for all payment types
+
+        // Quantity
+        if (qtyPriceEl) qtyPriceEl.textContent = totalProductPrice + ' ' + T_CURRENCY;
+        if (qty > 1 && qtyDetailEl && qtyCalcEl) {
+          qtyDetailEl.style.display = 'block';
+          qtyCalcEl.textContent = qty + ' \u00d7 ' + effectiveUnitPrice + ' ' + T_CURRENCY + ' = ' + totalProductPrice + ' ' + T_CURRENCY;
+        } else if (qtyDetailEl) {
+          qtyDetailEl.style.display = 'none';
+        }
+
+        // Option card prices
+        var codPriceEl = document.getElementById('codPrice');
+        var fullPriceEl = document.getElementById('fullPrice');
+        var depositPriceEl = document.getElementById('depositPrice');
+        if (codPriceEl) codPriceEl.textContent = totalProductPrice + ' ' + T_CURRENCY;
+        if (fullPriceEl) fullPriceEl.textContent = totalProductPrice + ' ' + T_CURRENCY;
+        if (depositPriceEl) depositPriceEl.textContent = DEPOSIT_AMOUNT + ' ' + T_CURRENCY;
+
+        // Deposit remaining
+        var depositRemainingInlineEl = document.getElementById('depositRemainingInline');
+        if (depositRemainingInlineEl) {
+          depositRemainingInlineEl.textContent = (totalProductPrice - DEPOSIT_AMOUNT) + ' ' + T_CURRENCY;
+        }
+
+        // Bank amount
+        var bankAmountEl = document.getElementById('bankAmount');
+        if (bankAmountEl) bankAmountEl.textContent = bankTransferAmount + ' ' + T_CURRENCY;
+
+        // Summary: qty
+        if (summaryQtyEl) summaryQtyEl.textContent = T_QUANTITY + ': ' + qty;
+        if (qty > 1 && summaryQtyRow) {
+          summaryQtyRow.style.display = '';
+          if (summaryQtyLabel) summaryQtyLabel.textContent = qty + ' \u00d7 ' + effectiveUnitPrice + ' ' + T_CURRENCY;
+          if (summarySubtotal) summarySubtotal.textContent = totalProductPrice + ' ' + T_CURRENCY;
+        } else if (summaryQtyRow) {
+          summaryQtyRow.style.display = 'none';
+        }
+
+        // Summary: variation
+        if (summaryVariant) {
+          var parts = [];
+          if (selectedSizeLabel) parts.push(T_SIZE + ': ' + selectedSizeLabel);
+          if (selectedColorLabel) parts.push(T_COLOR + ': ' + selectedColorLabel);
+          summaryVariant.textContent = parts.length > 0 ? parts.join(' | ') : T_ORIGINAL_PRODUCT;
+        }
+
+        // Summary: payment option
+        if (summaryOptionLabel && summaryOptionValue) {
+          summaryOptionLabel.textContent = T_PAYMENT_OPTION;
+          if (isCod) {
+            summaryOptionValue.textContent = T_COD_LABEL;
+          } else if (isDeposit) {
+            summaryOptionValue.textContent = T_DEPOSIT_LABEL + ' (' + DEPOSIT_AMOUNT + ' ' + T_CURRENCY + ')';
+          } else {
+            summaryOptionValue.textContent = T_FULL_PAYMENT;
+          }
+        }
+
+        // Summary: delivery
+        if (summaryDeliveryEl) {
+          if (isCod) {
+            summaryDeliveryEl.textContent = T_DELIVERY_24_48;
+            summaryDeliveryEl.style.color = 'var(--color-text-secondary)';
+          } else if (isDeposit) {
+            summaryDeliveryEl.textContent = T_WITHIN_48;
+            summaryDeliveryEl.style.color = 'var(--color-text-secondary)';
+          } else {
+            summaryDeliveryEl.textContent = T_FREE_DELIVERY_SAME_DAY;
+            summaryDeliveryEl.style.color = 'var(--color-success)';
+          }
+        }
+
+        // Summary: delivery fee row
+        if (summaryDeliveryFeeRow) {
+          summaryDeliveryFeeRow.style.display = isDeposit ? '' : 'none';
+          if (summaryDeliveryFee) summaryDeliveryFee.textContent = DELIVERY_FEE + ' ' + T_CURRENCY;
+        }
+
+        // Summary: total
+        if (summaryTotalEl) {
+          if (isCod) {
+            summaryTotalEl.textContent = totalProductPrice + ' ' + T_CURRENCY;
+          } else {
+            summaryTotalEl.textContent = bankTransferAmount + ' ' + T_CURRENCY;
+          }
+        }
+
+        // Summary: remaining
+        if (summaryRemaining) {
+          if (isDeposit) {
+            summaryRemaining.style.display = 'block';
+            if (summaryRemainingAmount) summaryRemainingAmount.textContent = remainingAmount + ' ' + T_CURRENCY;
+          } else {
+            summaryRemaining.style.display = 'none';
+          }
+        }
+      };
+
+      updateAllPrices();
+
+      // Copy buttons
+      document.querySelectorAll('.bank-detail__copy').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var value = btn.dataset.value;
+          if (!value) return;
+          navigator.clipboard.writeText(value).then(function() {
+            var original = btn.textContent;
+            btn.textContent = '✓';
+            btn.style.background = 'var(--color-success)';
+            btn.style.color = 'white';
+            setTimeout(function() { btn.textContent = original; btn.style.background = ''; btn.style.color = ''; }, 1500);
+          }).catch(function() {
+            var ta = document.createElement('textarea');
+            ta.value = value; ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+            var original = btn.textContent;
+            btn.textContent = '✓';
+            setTimeout(function() { btn.textContent = original; }, 1500);
+          });
+        });
+      });
+
+      // Receipt upload
+      if (uploadInput) {
+        uploadInput.addEventListener('change', function(e) {
+          var file = e.target.files[0];
+          if (!file) return;
+          var validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+          if (validTypes.indexOf(file.type) === -1) { showToast(T_CHOOSE_IMAGE_PDF, 'error'); uploadInput.value = ''; return; }
+          if (file.size > 10 * 1024 * 1024) { showToast(T_FILE_TOO_LARGE, 'error'); uploadInput.value = ''; return; }
+          if (uploadZone) { uploadZone.classList.remove('upload-zone--error'); uploadZone.classList.add('upload-zone--has-file'); }
+          var receiptError = document.getElementById('receiptError');
+          if (receiptError) receiptError.classList.remove('visible');
+          if (file.type.startsWith('image/')) {
+            var reader = new FileReader();
+            reader.onload = function(evt) { if (uploadPreviewImg) { uploadPreviewImg.src = evt.target.result; uploadPreviewImg.style.display = 'block'; } };
+            reader.readAsDataURL(file);
+          } else { if (uploadPreviewImg) uploadPreviewImg.style.display = 'none'; }
+          if (uploadPreviewName) uploadPreviewName.textContent = '✅ ' + file.name;
+          if (uploadPreview) uploadPreview.classList.add('visible');
+          if (uploadZone) {
+            var zoneText = uploadZone.querySelector('.upload-zone__text');
+            var zoneIcon = uploadZone.querySelector('.upload-zone__icon');
+            if (zoneText) zoneText.textContent = T_FILE_SELECTED;
+            if (zoneIcon) zoneIcon.textContent = '✅';
+          }
+        });
+      }
+      if (uploadPreviewRemove) {
+        uploadPreviewRemove.addEventListener('click', function(e) {
+          e.preventDefault(); e.stopPropagation();
+          if (uploadInput) uploadInput.value = '';
+          if (uploadPreview) uploadPreview.classList.remove('visible');
+          if (uploadPreviewImg) { uploadPreviewImg.src = ''; uploadPreviewImg.style.display = 'none'; }
+          if (uploadZone) {
+            uploadZone.classList.remove('upload-zone--has-file');
+            var zoneText = uploadZone.querySelector('.upload-zone__text');
+            var zoneIcon = uploadZone.querySelector('.upload-zone__icon');
+            if (zoneText) zoneText.textContent = T_CLICK_UPLOAD_RECEIPT;
+            if (zoneIcon) zoneIcon.textContent = '📤';
+          }
+        });
+      }
+
+      // Form submission
+      var isSubmitting = false;
+
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+
+          if (isSubmitting) return;
+
+          // Clear errors
+          document.querySelectorAll('.form-input--error').forEach(function(el) { el.classList.remove('form-input--error'); });
+          document.querySelectorAll('.form-error').forEach(function(el) { el.classList.remove('visible'); });
+          if (uploadZone) uploadZone.classList.remove('upload-zone--error');
+
+          var fullName = document.getElementById('fullName');
+          var phone = document.getElementById('phone');
+          var receiptFile = document.getElementById('receiptUpload');
+          var cityEl = document.getElementById('city');
+          var addressEl = document.getElementById('address');
+          var selectedPayment = document.querySelector('input[name="paymentType"]:checked');
+          var paymentType = selectedPayment ? selectedPayment.value : 'bank_full';
+          var isCod = paymentType === 'cod';
+
+          var isValid = true;
+
+          if (!fullName.value.trim()) { showFieldErr(fullName, T_ENTER_NAME); isValid = false; }
+          if (!phone.value.trim()) { showFieldErr(phone, T_ENTER_PHONE); isValid = false; }
+          else {
+            var phoneClean = phone.value.trim().replace(/[\s\-\+]/g, '');
+            if (!/^\d{9,15}$/.test(phoneClean)) { showFieldErr(phone, T_INVALID_PHONE); isValid = false; }
+          }
+
+          // Always validate city
+          if (cityEl && !cityEl.value.trim()) { showFieldErr(cityEl, T_ENTER_CITY); isValid = false; }
+          // Address required for COD, optional for bank
+          if (isCod && addressEl && !addressEl.value.trim()) { showFieldErr(addressEl, T_ENTER_ADDRESS); isValid = false; }
+
+          // Receipt required for bank transfer (not COD)
+          if (!isCod) {
+            if (!receiptFile || !receiptFile.files || !receiptFile.files.length) {
+              if (uploadZone) uploadZone.classList.add('upload-zone--error');
+              var rErr = document.getElementById('receiptError');
+              if (rErr) rErr.classList.add('visible');
+              isValid = false;
+            }
+          }
+
+          if (!isValid) { showToast(T_FILL_REQUIRED, 'error'); return; }
+
+          isSubmitting = true;
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg style="animation:spin 1s linear infinite;width:20px;height:20px;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4 31.4" stroke-dashoffset="10"/></svg> ' + T_SENDING_ORDER + '</span>';
+          }
+          showLoading();
+
+          var qty = qtyValueEl ? parseInt(qtyValueEl.textContent) || 1 : 1;
+
+          var formData = new FormData();
+          formData.append('fullName', fullName.value.trim());
+          formData.append('phone', phone.value.trim());
+          formData.append('quantity', qty);
+          formData.append('payment_type', paymentType);
+
+          // Always send city and address for all payment types
+          formData.append('city', cityEl ? cityEl.value.trim() : '');
+          formData.append('address', addressEl ? addressEl.value.trim() : '');
+
+          // Send receipt for bank transfer (not COD)
+          if (!isCod) {
+            if (receiptFile && receiptFile.files[0]) {
+              formData.append('receipt', receiptFile.files[0]);
+            }
+          }
+
+          // Variation info
+          if (selectedSizeId) formData.append('size_variation_id', selectedSizeId);
+          if (selectedColorId) formData.append('color_variation_id', selectedColorId);
+
+          var variationInfo = {};
+          if (selectedSizeLabel) variationInfo.size = selectedSizeLabel;
+          if (selectedColorLabel) variationInfo.color = selectedColorLabel;
+          if (sizePriceAdj) variationInfo.size_adjustment = sizePriceAdj;
+          if (colorPriceAdj) variationInfo.color_adjustment = colorPriceAdj;
+          formData.append('variation_info', JSON.stringify(variationInfo));
+
+          // Determine endpoint
+          var endpoint;
+          if (CHECKOUT_MODE === 'cart') {
+            endpoint = '/cart/checkout';
+          } else {
+            var slug = document.getElementById('productSlug');
+            endpoint = '/product/' + (slug ? slug.value : '') + '/order';
+          }
+
+          fetch(endpoint, { method: 'POST', body: formData })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.success) {
+              sessionStorage.setItem('orderRef', data.orderRef);
+              sessionStorage.setItem('customerName', fullName.value.trim());
+              window.location.href = '/thankyou';
+            } else {
+              hideLoading(); resetSubmitBtn();
+              showToast(data.error || T_ERROR_OCCURRED, 'error');
+            }
+          })
+          .catch(function(err) {
+            hideLoading(); resetSubmitBtn();
+            console.error('Order error:', err);
+            showToast(T_CONNECTION_ERROR, 'error');
+          });
+        }, true);
+      }
+
+      function resetSubmitBtn() {
+        isSubmitting = false;
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = T_PLACE_ORDER; }
+      }
+
+      function showFieldErr(input, message) {
+        input.classList.add('form-input--error');
+        var group = input.closest('.form-group');
+        if (group) {
+          var errorEl = group.querySelector('.form-error');
+          if (errorEl) { errorEl.textContent = '\u26a0\ufe0f ' + message; errorEl.classList.add('visible'); }
+        }
+      }
+
+      function showLoading() {
+        if (loadingOverlay) loadingOverlay.classList.add('visible');
+      }
+
+      function hideLoading() {
+        if (loadingOverlay) loadingOverlay.classList.remove('visible');
+      }
+
+    });
+  })();
+  </script>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

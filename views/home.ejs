@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%= (typeof metaTitle !== 'undefined' && metaTitle) ? metaTitle : ((typeof siteName !== 'undefined' ? siteName : 'متجرنا') + ' — ' + t('our_products')) %></title>
+  <style>
+    @media (min-width: 768px) { .products-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+    @media (min-width: 1024px) { .products-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+    @media (min-width: 768px) { .feedback-grid-home { grid-template-columns: repeat(3, 1fr) !important; } }
+    @media (min-width: 1024px) { .feedback-grid-home { grid-template-columns: repeat(4, 1fr) !important; } }
+    /* Collection grid responsive overrides */
+    <% if (typeof collections !== 'undefined' && collections.length > 0) { %>
+      <% collections.forEach(function(col) { %>
+        <% if (col.display_mode !== 'slider') { %>
+          <% if (col.grid_columns == 3) { %>
+            @media (min-width: 768px) { .col-grid-<%= col.id %> { grid-template-columns: repeat(3, 1fr) !important; } }
+          <% } else if (col.grid_columns == 4) { %>
+            @media (min-width: 768px) { .col-grid-<%= col.id %> { grid-template-columns: repeat(3, 1fr) !important; } }
+            @media (min-width: 1024px) { .col-grid-<%= col.id %> { grid-template-columns: repeat(4, 1fr) !important; } }
+          <% } %>
+        <% } %>
+      <% }); %>
+    <% } %>
+
+    /* Product slider styles */
+    .product-slider-wrap { position: relative; overflow: hidden; }
+    .product-slider { display: flex; gap: 12px; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding: 4px 0 16px; scrollbar-width: none; -ms-overflow-style: none; }
+    .product-slider::-webkit-scrollbar { display: none; }
+    .product-slider .slide-card { flex: 0 0 calc(50% - 6px); scroll-snap-align: start; }
+    @media (min-width: 768px) { .product-slider .slide-card { flex: 0 0 calc(33.333% - 8px); } }
+    @media (min-width: 1024px) { .product-slider .slide-card { flex: 0 0 calc(25% - 9px); } }
+    .slider-arrow { position: absolute; top: 50%; transform: translateY(-50%); background: var(--color-slider-arrow-bg, rgba(255,255,255,0.9)); color: var(--color-slider-arrow, var(--color-text)); border: none; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.1); z-index: 2; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; }
+    .slider-arrow:hover { opacity: 0.8; }
+    .slider-arrow-left { left: 8px; }
+    .slider-arrow-right { right: 8px; }
+
+    /* Collection section */
+    .collection-section { padding: 24px 0 8px; }
+    .collection-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .collection-title { font-size: 20px; font-weight: 700; color: var(--color-text); margin: 0; }
+    .collection-viewall { font-size: 13px; font-weight: 600; color: var(--color-primary); text-decoration: none; display: flex; align-items: center; gap: 4px; }
+    .collection-viewall:hover { opacity: 0.7; }
+
+    /* List display mode */
+    .products-list { display: flex; flex-direction: column; gap: 12px; }
+    .products-list .list-item { display: flex; gap: 16px; background: var(--color-card, #fff); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-decoration: none; transition: transform 0.2s, box-shadow 0.2s; }
+    .products-list .list-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .products-list .list-item-img { width: 120px; min-height: 120px; flex-shrink: 0; overflow: hidden; background: var(--color-bg-warm, #f8f6f3); position: relative; }
+    .products-list .list-item-img img { width: 100%; height: 100%; object-fit: cover; }
+    .products-list .list-item-info { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; justify-content: center; }
+    .products-list .list-item-title { font-size: 14px; font-weight: 600; color: var(--color-text, #333); margin: 0 0 8px; line-height: 1.4; }
+    .products-list .list-item-price { font-size: 16px; font-weight: 800; color: var(--color-primary); }
+    .products-list .list-item-oldprice { font-size: 12px; color: var(--color-text-muted, #aaa); text-decoration: line-through; margin-right: 6px; }
+
+    /* Show more button */
+    .show-more-btn { display: block; text-align: center; padding: 14px; margin-top: 16px; font-size: 14px; font-weight: 600; color: var(--color-text-secondary, #666); text-decoration: none; transition: color 0.2s; }
+    .show-more-btn:hover { color: var(--color-primary); }
+  </style>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner">
+        <div class="navbar__brand">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <a href="/search" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('search') %>">🔍</a>
+          <a href="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'javascript:void(0)' : '/cart' %>" id="cartLink" onclick="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'openCartDrawer();return false;' : '' %>" style="position: relative; font-size: 22px; color: var(--color-text); text-decoration: none;">🛒<span id="cartBadge" style="position: absolute; top: -8px; right: -8px; background: var(--color-error); color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 50%; display: <%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'flex' : 'none' %>; align-items: center; justify-content: center;"><%= (typeof cartCount !== 'undefined' && cartCount > 0) ? cartCount : '0' %></span></a>
+          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
+          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Image Slider -->
+  <% if (typeof sliders !== 'undefined' && sliders && sliders.length > 0) { %>
+  <section class="home-slider" style="position: relative; overflow: hidden; margin-top: 60px;">
+    <div class="slider-container" id="sliderContainer" style="display: flex; transition: transform 0.5s ease; width: <%= sliders.length * 100 %>%;">
+      <% sliders.forEach(function(slide) { %>
+        <div class="slider-slide" style="flex: 0 0 <%= 100 / sliders.length %>%; position: relative;">
+          <% if (slide.link_url) { %>
+            <a href="<%= slide.link_url %>">
+          <% } %>
+            <img src="/uploads/sliders/<%= slide.image_filename %>" alt="<%= slide.title || '' %>" style="width: 100%; height: auto; max-height: 500px; object-fit: cover; display: block;">
+            <% if (slide.title) { %>
+              <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 30px; background: linear-gradient(transparent, rgba(0,0,0,0.6)); color: white;">
+                <h3 style="font-size: 20px; font-weight: 700; margin: 0;"><%= slide.title %></h3>
+              </div>
+            <% } %>
+          <% if (slide.link_url) { %>
+            </a>
+          <% } %>
+        </div>
+      <% }); %>
+    </div>
+    <% if (sliders.length > 1) { %>
+    <button type="button" onclick="<%= (typeof dir !== 'undefined' && dir === 'ltr') ? 'slidePrev()' : 'slideNext()' %>" style="position: absolute; top: 50%; left: 12px; transform: translateY(-50%); background: var(--color-slider-arrow-bg, rgba(255,255,255,0.8)); color: var(--color-slider-arrow, #333); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;">‹</button>
+    <button type="button" onclick="<%= (typeof dir !== 'undefined' && dir === 'ltr') ? 'slideNext()' : 'slidePrev()' %>" style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: var(--color-slider-arrow-bg, rgba(255,255,255,0.8)); color: var(--color-slider-arrow, #333); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;">›</button>
+    <div style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px;">
+      <% sliders.forEach(function(s, idx) { %>
+        <div class="slider-dot<%= idx === 0 ? ' active' : '' %>" data-index="<%= idx %>" onclick="slideTo(<%= idx %>)" style="width: 10px; height: 10px; border-radius: 50%; background: <%= idx === 0 ? 'var(--color-primary)' : 'rgba(255,255,255,0.6)' %>; cursor: pointer; transition: var(--transition-fast);"></div>
+      <% }); %>
+    </div>
+    <% } %>
+  </section>
+  <% } %>
+
+  <!-- Categories Section -->
+  <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
+  <section style="padding: 20px 0 10px; <%= (typeof sliders === 'undefined' || !sliders || sliders.length === 0) ? 'margin-top: 60px;' : '' %>">
+    <div class="container">
+      <div style="display: flex; overflow-x: auto; gap: 16px; padding: 4px 0; -webkit-overflow-scrolling: touch;">
+        <% categories.forEach(function(cat) { %>
+          <a href="/category/<%= cat.slug %>" style="text-decoration: none; flex: 0 0 auto; text-align: center; width: 100px;">
+            <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; margin: 0 auto 8px; border: 2px solid var(--color-border); background: var(--color-bg-warm);">
+              <% if (cat.image_filename) { %>
+                <img src="/uploads/categories/<%= cat.image_filename %>" alt="<%= cat.name %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+              <% } else { %>
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px;">&#x1F4E6;</div>
+              <% } %>
+            </div>
+            <span style="font-size: 13px; font-weight: 600; color: var(--color-text); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= cat.name %></span>
+          </a>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <% if (typeof useCollections !== 'undefined' && useCollections && collections.length > 0) { %>
+    <!-- ===== COLLECTIONS-BASED HOME PAGE ===== -->
+    <%
+      var noSliderNoCat = (typeof sliders === 'undefined' || !sliders || sliders.length === 0) && (typeof categories === 'undefined' || categories.length === 0);
+      var firstCollection = true;
+    %>
+    <% collections.forEach(function(col) { %>
+      <% if (col.section_type === 'feedback' && col.feedbackReviews && col.feedbackReviews.length > 0) { %>
+      <!-- Feedback Section (from Collections) -->
+      <section style="padding: 40px 0 50px; background: var(--color-bg-warm);">
+        <div class="container container--narrow">
+          <style>
+            .hrv-card { background: var(--color-card); border-radius: 16px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--color-border-light); }
+            .hrv-card[dir="ltr"] { direction: ltr; text-align: left; }
+            .hrv-card[dir="rtl"] { direction: rtl; text-align: right; }
+            .hrv-card__hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+            .hrv-card__av { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; text-transform: uppercase; }
+            .hrv-card__nm { font-size: 14px; font-weight: 700; color: var(--color-text); }
+            .hrv-card__vf { display: inline-flex; width: 16px; height: 16px; flex-shrink: 0; margin-inline-start: 4px; vertical-align: middle; }
+            .hrv-card__vf svg { width: 16px; height: 16px; }
+            .hrv-card__body { min-height: 40px; margin-bottom: 8px; }
+            .hrv-card__body .wa-audio-player { margin-top: 4px; width: 100%; min-width: 0; }
+            .hrv-card__txt { font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+            .hrv-card__imgs { display: flex; gap: 8px; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
+            .hrv-card__imgs::-webkit-scrollbar { display: none; }
+            .hrv-card__imgs img { width: 90px; height: 90px; object-fit: cover; border-radius: 10px; flex-shrink: 0; border: 1px solid var(--color-border-light); cursor: pointer; transition: transform 0.2s; }
+            .hrv-card__imgs img:hover { transform: scale(1.05); }
+            .hrv-card__stars { color: var(--color-star); font-size: 15px; letter-spacing: 2px; }
+            @media (max-width: 600px) {
+              .hrv-card__imgs img { width: 80px; height: 80px; }
+            }
+          </style>
+          <div class="section-header" style="margin-top: 0;">
+            <h2 class="section-header__title"><%= t('customer_feedback') %></h2>
+            <div class="section-header__divider"></div>
+          </div>
+          <div style="margin-bottom: 24px;">
+            <% col.feedbackReviews.forEach(function(rev) { %>
+              <%
+                var _himgs = [];
+                if (rev.image_filename) {
+                  try { _himgs = JSON.parse(rev.image_filename); } catch(e) { _himgs = [rev.image_filename]; }
+                  _himgs = _himgs.filter(function(img) { return !!img; });
+                }
+                var _hInit = (rev.name || '?').charAt(0).toUpperCase();
+                var _hText = (rev.name || '') + ' ' + (rev.message || '');
+                var _hIsAr = /[\u0600-\u06FF]/.test(_hText);
+                var _hDir = _hIsAr ? 'rtl' : 'ltr';
+              %>
+              <div class="hrv-card" dir="<%= _hDir %>">
+                <div class="hrv-card__hdr">
+                  <div class="hrv-card__av"><%= _hInit %></div>
+                  <div>
+                    <span class="hrv-card__nm"><%= rev.name || t('customer') %></span>
+                    <span class="hrv-card__vf"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#1DA1F2"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  </div>
+                </div>
+                <div class="hrv-card__body">
+                  <% if (rev.message) { %><p class="hrv-card__txt"><%= rev.message %></p><% } %>
+                  <% if (rev.audio_filename) { %>
+                    <div class="wa-audio-player" data-src="/uploads/reviews/<%= rev.audio_filename %>">
+                      <button type="button" class="wa-play-btn" onclick="toggleWaAudio(this)" style="width: 28px; height: 28px; font-size: 11px;">▶</button>
+                      <div class="wa-progress-wrap" onclick="seekWaAudio(event, this)"><div class="wa-waveform"></div></div>
+                      <span class="wa-time" style="font-size: 11px;">0:00</span>
+                    </div>
+                  <% } %>
+                </div>
+                <% if (_himgs.length > 0) { %>
+                  <div class="hrv-card__imgs">
+                    <% _himgs.forEach(function(img) { %><img src="/uploads/reviews/<%= img %>" alt="" loading="lazy"><% }); %>
+                  </div>
+                <% } %>
+                <div class="hrv-card__stars"><% for (var i = 1; i <= 5; i++) { %><%= i <= rev.rating ? '★' : '☆' %><% } %></div>
+              </div>
+            <% }); %>
+          </div>
+          <div style="text-align: center;">
+            <a href="/feedback" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 32px; background: var(--color-primary); color: #fff; text-decoration: none; border-radius: 10px; font-size: 15px; font-weight: 700; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+              <%= t('view_all_reviews') %> (<%= col.feedbackCount || 0 %>)
+            </a>
+          </div>
+        </div>
+      </section>
+      <% firstCollection = false; %>
+      <% } else if (col.section_type === 'faq' && col.faqItems && col.faqItems.length > 0) { %>
+      <!-- FAQ Accordion Section (from Collections) -->
+      <%
+        var _faqDir = (typeof dir !== 'undefined') ? dir : 'rtl';
+        var _faqLang = (typeof lang !== 'undefined') ? lang : 'ar';
+      %>
+      <section style="padding: 48px 0 56px; background: var(--color-bg-warm);">
+        <div class="container container--narrow">
+          <style>
+            /* === Collapsible FAQ Accordion === */
+            .collapsible-content { max-width: 720px; margin: 0 auto; }
+            .collapsible-content__item {
+              background: var(--color-card);
+              border-radius: 16px;
+              margin-bottom: 12px;
+              box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+              border: 1px solid rgba(0,0,0,0.04);
+              overflow: hidden;
+              transition: box-shadow 0.3s ease, transform 0.2s ease;
+            }
+            .collapsible-content__item:hover {
+              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+              transform: translateY(-1px);
+            }
+            .collapsible-content__item.open {
+              box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+            }
+            .collapsible-content__toggle {
+              display: flex;
+              align-items: center;
+              padding: 18px 22px;
+              cursor: pointer;
+              user-select: none;
+              gap: 14px;
+              transition: background 0.2s;
+            }
+            .collapsible-content__toggle:hover {
+              background: rgba(0,0,0,0.015);
+            }
+            .collapsible-content__icon {
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              background: #f0f0f0;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              flex-shrink: 0;
+              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+              position: relative;
+              order: 1;
+            }
+            .collapsible-content__icon::before,
+            .collapsible-content__icon::after {
+              content: '';
+              position: absolute;
+              background: #666;
+              border-radius: 1px;
+              transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .collapsible-content__icon::before {
+              width: 14px;
+              height: 2px;
+            }
+            .collapsible-content__icon::after {
+              width: 2px;
+              height: 14px;
+            }
+            .collapsible-content__item.open .collapsible-content__icon {
+              background: var(--color-primary);
+              box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+              transform: rotate(180deg);
+            }
+            .collapsible-content__item.open .collapsible-content__icon::before {
+              background: #fff;
+            }
+            .collapsible-content__item.open .collapsible-content__icon::after {
+              background: #fff;
+              height: 0;
+            }
+            .collapsible-content__question {
+              font-size: 15px;
+              font-weight: 700;
+              color: var(--color-text);
+              flex: 1;
+              line-height: 1.6;
+              order: 0;
+              <% if (_faqDir === 'rtl') { %>
+              text-align: right;
+              <% } else { %>
+              text-align: left;
+              <% } %>
+            }
+            .collapsible-content__answer {
+              display: grid;
+              grid-template-rows: 0fr;
+              transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .collapsible-content__item.open .collapsible-content__answer {
+              grid-template-rows: 1fr;
+            }
+            .collapsible-content__answer-wrap {
+              overflow: hidden;
+            }
+            .collapsible-content__answer-inner {
+              padding: 0 22px 20px;
+              font-size: 14px;
+              line-height: 1.9;
+              color: var(--color-text-secondary);
+              <% if (_faqDir === 'rtl') { %>
+              text-align: right;
+              padding-left: 68px;
+              padding-right: 22px;
+              <% } else { %>
+              text-align: left;
+              padding-right: 68px;
+              padding-left: 22px;
+              <% } %>
+            }
+            /* Responsive */
+            @media (max-width: 600px) {
+              .collapsible-content__toggle { padding: 16px 16px; gap: 12px; }
+              .collapsible-content__question { font-size: 14px; }
+              .collapsible-content__answer-inner {
+                padding: 0 16px 16px;
+                font-size: 13px;
+                <% if (_faqDir === 'rtl') { %>
+                padding-left: 60px;
+                padding-right: 16px;
+                <% } else { %>
+                padding-right: 60px;
+                padding-left: 16px;
+                <% } %>
+              }
+              .collapsible-content__icon { width: 28px; height: 28px; }
+              .collapsible-content__icon::before { width: 12px; }
+              .collapsible-content__icon::after { height: 12px; }
+            }
+          </style>
+          <% if (col.show_title) { %>
+          <div class="section-header" style="margin-top: 0;">
+            <h2 class="section-header__title"><%= col.name || 'FAQ' %></h2>
+            <div class="section-header__divider"></div>
+          </div>
+          <% } %>
+          <div class="collapsible-content" dir="<%= _faqDir %>">
+            <% col.faqItems.forEach(function(faq) { %>
+              <%
+                var _faqQuestion = (_faqLang === 'fr' && faq.question_fr) ? faq.question_fr : faq.question;
+                var _faqAnswer = (_faqLang === 'fr' && faq.answer_fr) ? faq.answer_fr : faq.answer;
+              %>
+              <div class="collapsible-content__item" onclick="this.classList.toggle('open')">
+                <div class="collapsible-content__toggle">
+                  <span class="collapsible-content__icon"></span>
+                  <span class="collapsible-content__question"><%= _faqQuestion %></span>
+                </div>
+                <div class="collapsible-content__answer">
+                  <div class="collapsible-content__answer-wrap">
+                    <div class="collapsible-content__answer-inner"><%= _faqAnswer %></div>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+      <% firstCollection = false; %>
+      <% } else if (col.section_type === 'banner' && col.banner_desktop_image) { %>
+      <!-- Banner Section -->
+      <section class="collection-section" <% if (firstCollection && noSliderNoCat) { %>style="margin-top: 60px;"<% } %>>
+        <div class="container">
+          <% if (col.show_title) { %>
+          <div class="collection-header">
+            <h2 class="collection-title"><%= col.name %></h2>
+          </div>
+          <% } %>
+          <div style="border-radius: 12px; overflow: hidden;">
+            <% if (col.banner_link_url) { %><a href="<%= col.banner_link_url %>" style="display:block;"><% } %>
+              <picture>
+                <% if (col.banner_mobile_image) { %><source media="(max-width: 600px)" srcset="/uploads/banners/<%= col.banner_mobile_image %>"><% } %>
+                <img src="/uploads/banners/<%= col.banner_desktop_image %>" alt="<%= col.name %>" style="width: 100%; height: auto; display: block; border-radius: 12px;" loading="lazy">
+              </picture>
+            <% if (col.banner_link_url) { %></a><% } %>
+          </div>
+        </div>
+      </section>
+      <% firstCollection = false; %>
+      <% } else if (col.products && col.products.length > 0) { %>
+      <section class="collection-section" <% if (firstCollection && noSliderNoCat) { %>style="margin-top: 60px;"<% } %>>
+        <div class="container">
+          <% if (col.show_title) { %>
+          <div class="collection-header">
+            <h2 class="collection-title"><%= col.name %></h2>
+            <% if (col.categorySlug) { %>
+              <a href="/category/<%= col.categorySlug %>" class="collection-viewall"><%= t('view_all') %> ←</a>
+            <% } %>
+          </div>
+          <% } %>
+
+          <% if (col.display_mode === 'slider' || col.display_mode === 'both') { %>
+            <%
+              var sliderProducts = col.products.slice(0, col.slider_product_count || 10);
+            %>
+            <div class="product-slider-wrap">
+              <div class="product-slider" id="pslider-<%= col.id %>">
+                <% sliderProducts.forEach(function(p) { %>
+                  <a href="/product/<%= p.slug %>" class="slide-card" style="text-decoration: none; background: var(--color-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: block;">
+                    <div style="width: 100%; aspect-ratio: 1; overflow: hidden; background: var(--color-bg-warm); position: relative;">
+                      <% if (p.main_image) { %>
+                        <img src="/uploads/products/<%= p.main_image %>" alt="<%= p.title %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                      <% } else { %>
+                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #ccc;">🛍️</div>
+                      <% } %>
+                      <% if (p.old_price && p.old_price > p.price) { %>
+                        <span style="position: absolute; top: 8px; left: 8px; background: var(--color-discount); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">-<%= Math.round(((p.old_price - p.price) / p.old_price) * 100) %>%</span>
+                      <% } %>
+                    </div>
+                    <div style="padding: 10px 12px 14px;">
+                      <h3 style="font-size: 13px; font-weight: 600; color: var(--color-text); margin: 0 0 6px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><%= p.title %></h3>
+                      <div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;">
+                        <span style="font-size: 16px; font-weight: 800; color: var(--color-primary);"><%= p.price %> <span style="font-size: 12px; font-weight: 600;"><%= t('currency') %></span></span>
+                        <% if (p.old_price && p.old_price > p.price) { %>
+                          <span style="font-size: 12px; color: var(--color-text-muted); text-decoration: line-through;"><%= p.old_price %></span>
+                        <% } %>
+                      </div>
+                    </div>
+                  </a>
+                <% }); %>
+              </div>
+              <% if (sliderProducts.length > 2) { %>
+              <button type="button" class="slider-arrow slider-arrow-left" onclick="scrollSlider('pslider-<%= col.id %>', <%= (typeof dir !== 'undefined' && dir === 'ltr') ? -1 : 1 %>)">‹</button>
+              <button type="button" class="slider-arrow slider-arrow-right" onclick="scrollSlider('pslider-<%= col.id %>', <%= (typeof dir !== 'undefined' && dir === 'ltr') ? 1 : -1 %>)">›</button>
+              <% } %>
+            </div>
+          <% } %>
+
+          <% if (col.display_mode === 'list') { %>
+            <%
+              var listProducts = col.products.slice(0, col.grid_product_count || 4);
+            %>
+            <div class="products-list">
+              <% listProducts.forEach(function(p) { %>
+                <a href="/product/<%= p.slug %>" class="list-item">
+                  <div class="list-item-img">
+                    <% if (p.main_image) { %>
+                      <img src="/uploads/products/<%= p.main_image %>" alt="<%= p.title %>" loading="lazy">
+                    <% } else { %>
+                      <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 36px; color: #ccc;">🛍️</div>
+                    <% } %>
+                    <% if (p.old_price && p.old_price > p.price) { %>
+                      <span style="position: absolute; top: 8px; left: 8px; background: var(--color-discount); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">-<%= Math.round(((p.old_price - p.price) / p.old_price) * 100) %>%</span>
+                    <% } %>
+                  </div>
+                  <div class="list-item-info">
+                    <h3 class="list-item-title"><%= p.title %></h3>
+                    <div style="display: flex; align-items: baseline; gap: 6px;">
+                      <span class="list-item-price"><%= p.price %> <span style="font-size: 12px; font-weight: 600;"><%= t('currency') %></span></span>
+                      <% if (p.old_price && p.old_price > p.price) { %>
+                        <span class="list-item-oldprice"><%= p.old_price %></span>
+                      <% } %>
+                    </div>
+                  </div>
+                </a>
+              <% }); %>
+            </div>
+
+          <% } else if (col.display_mode === 'grid' || col.display_mode === 'both') { %>
+            <%
+              var gridProducts = col.products.slice(0, col.grid_product_count || 6);
+              var gridCols = col.grid_columns || 2;
+            %>
+            <% if (col.display_mode === 'both') { %>
+              <div style="height: 20px;"></div>
+            <% } %>
+            <div class="products-grid col-grid-<%= col.id %>" style="display: grid; grid-template-columns: repeat(<%= gridCols %>, 1fr); gap: 12px;">
+              <% gridProducts.forEach(function(p) { %>
+                <a href="/product/<%= p.slug %>" class="product-card" style="text-decoration: none; cursor: pointer; background: var(--color-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)';">
+                  <div style="width: 100%; aspect-ratio: 1; overflow: hidden; background: var(--color-bg-warm); position: relative;">
+                    <% if (p.main_image) { %>
+                      <img src="/uploads/products/<%= p.main_image %>" alt="<%= p.title %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                    <% } else if (p.video_filename) { %>
+                      <video muted loop playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;" onmouseenter="this.play()" onmouseleave="this.pause()">
+                        <source src="/uploads/products/<%= p.video_filename %>" type="video/mp4">
+                      </video>
+                    <% } else { %>
+                      <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #ccc;">🛍️</div>
+                    <% } %>
+                    <% if (p.old_price && p.old_price > p.price) { %>
+                      <span style="position: absolute; top: 8px; left: 8px; background: var(--color-discount); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">-<%= Math.round(((p.old_price - p.price) / p.old_price) * 100) %>%</span>
+                    <% } %>
+                  </div>
+                  <div style="padding: 10px 12px 14px;">
+                    <h3 style="font-size: 13px; font-weight: 600; color: var(--color-text); margin: 0 0 6px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><%= p.title %></h3>
+                    <div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;">
+                      <span style="font-size: 16px; font-weight: 800; color: var(--color-primary);"><%= p.price %> <span style="font-size: 12px; font-weight: 600;"><%= t('currency') %></span></span>
+                      <% if (p.old_price && p.old_price > p.price) { %>
+                        <span style="font-size: 12px; color: var(--color-text-muted); text-decoration: line-through;"><%= p.old_price %></span>
+                      <% } %>
+                    </div>
+                  </div>
+                </a>
+              <% }); %>
+            </div>
+          <% } %>
+
+          <% if (col.categorySlug) { %>
+            <a href="/category/<%= col.categorySlug %>" class="show-more-btn"><%= t('view_all') %> →</a>
+          <% } %>
+        </div>
+      </section>
+      <% firstCollection = false; } %>
+    <% }); %>
+
+  <% } else { %>
+    <!-- ===== FALLBACK: Original all-products grid ===== -->
+    <section class="hero" style="padding-top: 30px; padding-bottom: 60px;">
+      <div class="container">
+        <div class="section-header" style="margin-top: 0;">
+          <span class="section-header__label"><%= t('shop_now') %></span>
+          <h1 class="section-header__title"><%= typeof currentCategory !== 'undefined' && currentCategory ? currentCategory.name : t('our_products') %></h1>
+          <div class="section-header__divider"></div>
+        </div>
+
+        <% var _banners = (typeof banners !== 'undefined' && banners) ? banners : []; %>
+        <% var _bInterval = (typeof bannerInterval !== 'undefined') ? bannerInterval : 4; %>
+        <% var _bIdx = 0; %>
+        <div class="products-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;" id="productsGrid">
+          <% products.forEach(function(p, idx) { %>
+            <%/* Insert banner after every N products */%>
+            <% if (_banners.length > 0 && idx > 0 && idx % _bInterval === 0) { %>
+              <% var _b = _banners[_bIdx % _banners.length]; _bIdx++; %>
+              <div class="grid-banner" style="grid-column: 1 / -1; border-radius: 12px; overflow: hidden;">
+                <% if (_b.link_url) { %><a href="<%= _b.link_url %>" style="display:block;"><% } %>
+                  <picture>
+                    <% if (_b.mobile_image) { %><source media="(max-width: 600px)" srcset="/uploads/banners/<%= _b.mobile_image %>"><% } %>
+                    <img src="/uploads/banners/<%= _b.desktop_image %>" alt="" style="width: 100%; height: auto; display: block; border-radius: 12px;" loading="lazy">
+                  </picture>
+                <% if (_b.link_url) { %></a><% } %>
+              </div>
+            <% } %>
+            <a href="/product/<%= p.slug %>" class="product-card" style="text-decoration: none; cursor: pointer; background: var(--color-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s; display: block;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';" onmouseout="this.style.transform=''; this.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)';">
+              <div style="width: 100%; aspect-ratio: 1; overflow: hidden; background: var(--color-bg-warm); position: relative;">
+                <% if (p.main_image) { %>
+                  <img src="/uploads/products/<%= p.main_image %>" alt="<%= p.title %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                <% } else if (p.video_filename) { %>
+                  <video muted loop playsinline preload="none" style="width: 100%; height: 100%; object-fit: cover;" onmouseenter="this.play()" onmouseleave="this.pause()">
+                    <source src="/uploads/products/<%= p.video_filename %>" type="video/mp4">
+                  </video>
+                <% } else { %>
+                  <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #ccc;">🛍️</div>
+                <% } %>
+                <% if (p.old_price && p.old_price > p.price) { %>
+                  <span style="position: absolute; top: 8px; left: 8px; background: var(--color-discount); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">-<%= Math.round(((p.old_price - p.price) / p.old_price) * 100) %>%</span>
+                <% } %>
+              </div>
+              <div style="padding: 10px 12px 14px;">
+                <h3 style="font-size: 13px; font-weight: 600; color: var(--color-text); margin: 0 0 6px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><%= p.title %></h3>
+                <div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;">
+                  <span style="font-size: 16px; font-weight: 800; color: var(--color-primary);"><%= p.price %> <span style="font-size: 12px; font-weight: 600;"><%= t('currency') %></span></span>
+                  <% if (p.old_price && p.old_price > p.price) { %>
+                    <span style="font-size: 12px; color: var(--color-text-muted); text-decoration: line-through;"><%= p.old_price %></span>
+                  <% } %>
+                </div>
+              </div>
+            </a>
+          <% }); %>
+        </div>
+
+        <div id="loadingMore" style="text-align: center; padding: 20px; display: none;">
+          <span style="color: var(--color-text-muted);"><%= t('loading_more') %></span>
+        </div>
+
+        <% if (products.length === 0) { %>
+          <div style="text-align: center; padding: 60px 20px; color: var(--color-text-muted);">
+            <p style="font-size: 48px; margin-bottom: 16px;">🏪</p>
+            <p style="font-size: 18px; font-weight: 600;"><%= t('no_products') %></p>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  <% } %>
+
+  <!-- Customer Feedback Section (fallback — only if no feedback collection card exists) -->
+  <% if (typeof latestReviews !== 'undefined' && latestReviews && latestReviews.length > 0 && (typeof showFeedbackSection === 'undefined' || showFeedbackSection !== false) && !feedbackCollectionId) { %>
+  <section style="padding: 40px 0 50px; background: var(--color-bg-warm);">
+    <div class="container container--narrow">
+      <div class="section-header" style="margin-top: 0;">
+        <h2 class="section-header__title"><%= t('customer_feedback') %></h2>
+        <div class="section-header__divider"></div>
+      </div>
+
+      <style>
+        .hrv-card { background: var(--color-card); border-radius: 16px; padding: 16px 18px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--color-border-light); }
+        .hrv-card[dir="ltr"] { direction: ltr; text-align: left; }
+        .hrv-card[dir="rtl"] { direction: rtl; text-align: right; }
+        .hrv-card__hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .hrv-card__av { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; flex-shrink: 0; text-transform: uppercase; }
+        .hrv-card__nm { font-size: 14px; font-weight: 700; color: var(--color-text); }
+        .hrv-card__vf { display: inline-flex; width: 16px; height: 16px; flex-shrink: 0; margin-inline-start: 4px; vertical-align: middle; }
+        .hrv-card__vf svg { width: 16px; height: 16px; }
+        .hrv-card__body { min-height: 40px; margin-bottom: 8px; }
+        .hrv-card__body .wa-audio-player { margin-top: 4px; width: 100%; min-width: 0; }
+        .hrv-card__txt { font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); margin: 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .hrv-card__imgs { display: flex; gap: 8px; margin-bottom: 8px; overflow-x: auto; scrollbar-width: none; }
+        .hrv-card__imgs::-webkit-scrollbar { display: none; }
+        .hrv-card__imgs img { width: 90px; height: 90px; object-fit: cover; border-radius: 10px; flex-shrink: 0; border: 1px solid var(--color-border-light); cursor: pointer; transition: transform 0.2s; }
+        .hrv-card__imgs img:hover { transform: scale(1.05); }
+        .hrv-card__stars { color: var(--color-star); font-size: 15px; letter-spacing: 2px; }
+        @media (max-width: 600px) {
+          .hrv-card__imgs img { width: 80px; height: 80px; }
+        }
+      </style>
+
+      <div style="margin-bottom: 24px;">
+        <% latestReviews.forEach(function(rev) { %>
+          <%
+            var _himgs = [];
+            if (rev.image_filename) {
+              try { _himgs = JSON.parse(rev.image_filename); } catch(e) { _himgs = [rev.image_filename]; }
+              _himgs = _himgs.filter(function(img) { return !!img; });
+            }
+            var _hInit = (rev.name || '?').charAt(0).toUpperCase();
+            var _hText = (rev.name || '') + ' ' + (rev.message || '');
+            var _hIsAr = /[\u0600-\u06FF]/.test(_hText);
+            var _hDir = _hIsAr ? 'rtl' : 'ltr';
+          %>
+          <div class="hrv-card" dir="<%= _hDir %>">
+            <div class="hrv-card__hdr">
+              <div class="hrv-card__av"><%= _hInit %></div>
+              <div>
+                <span class="hrv-card__nm"><%= rev.name || t('customer') %></span>
+                <span class="hrv-card__vf"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#1DA1F2"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              </div>
+            </div>
+            <div class="hrv-card__body">
+              <% if (rev.message) { %><p class="hrv-card__txt"><%= rev.message %></p><% } %>
+              <% if (rev.audio_filename) { %>
+                <div class="wa-audio-player" data-src="/uploads/reviews/<%= rev.audio_filename %>">
+                  <button type="button" class="wa-play-btn" onclick="toggleWaAudio(this)" style="width: 28px; height: 28px; font-size: 11px;">▶</button>
+                  <div class="wa-progress-wrap" onclick="seekWaAudio(event, this)"><div class="wa-waveform"></div></div>
+                  <span class="wa-time" style="font-size: 11px;">0:00</span>
+                </div>
+              <% } %>
+            </div>
+            <% if (_himgs.length > 0) { %>
+              <div class="hrv-card__imgs">
+                <% _himgs.forEach(function(img) { %><img src="/uploads/reviews/<%= img %>" alt="" loading="lazy"><% }); %>
+              </div>
+            <% } %>
+            <div class="hrv-card__stars"><% for (var i = 1; i <= 5; i++) { %><%= i <= rev.rating ? '★' : '☆' %><% } %></div>
+          </div>
+        <% }); %>
+      </div>
+
+      <div style="text-align: center;">
+        <a href="/feedback" style="display: inline-flex; align-items: center; gap: 8px; padding: 12px 32px; background: var(--color-primary); color: #fff; text-decoration: none; border-radius: 10px; font-size: 15px; font-weight: 700; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+          <%= t('view_all_reviews') %> (<%= typeof homeReviewCount !== 'undefined' ? homeReviewCount : '' %>)
+        </a>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <%- include('partials/footer') %>
+
+  <script>
+    // Product slider scroll function
+    function scrollSlider(id, direction) {
+      var slider = document.getElementById(id);
+      if (!slider) return;
+      var cardWidth = slider.querySelector('.slide-card').offsetWidth + 12;
+      slider.scrollBy({ left: direction * cardWidth * 2, behavior: 'smooth' });
+    }
+
+    // Auto-play sliders
+    <% if (typeof collections !== 'undefined' && collections.length > 0) { %>
+      <% collections.forEach(function(col) { %>
+        <% if ((col.display_mode === 'slider' || col.display_mode === 'both') && col.slider_autoplay) { %>
+          (function() {
+            var slider = document.getElementById('pslider-<%= col.id %>');
+            if (!slider) return;
+            setInterval(function() {
+              var maxScroll = slider.scrollWidth - slider.clientWidth;
+              if (slider.scrollLeft >= maxScroll - 10) {
+                slider.scrollTo({ left: 0, behavior: 'smooth' });
+              } else {
+                var cardWidth = slider.querySelector('.slide-card') ? slider.querySelector('.slide-card').offsetWidth + 12 : 200;
+                slider.scrollBy({ left: cardWidth, behavior: 'smooth' });
+              }
+            }, 4000);
+          })();
+        <% } %>
+      <% }); %>
+    <% } %>
+
+    <% if (typeof useCollections === 'undefined' || !useCollections) { %>
+    // Infinite scroll with banner support (only when not using collections)
+    var currentPage = 1;
+    var isLoadingMore = false;
+    var hasMoreProducts = <%= products.length >= 6 ? 'true' : 'false' %>;
+    var totalProductCount = <%= products.length %>;
+    var bannerIdx = <%= typeof _bIdx !== 'undefined' ? _bIdx : 0 %>;
+
+    window.addEventListener('scroll', function() {
+      if (isLoadingMore || !hasMoreProducts) return;
+      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
+        loadMoreProducts();
+      }
+    });
+
+    function createBannerHtml(banner) {
+      var html = '<div class="grid-banner" style="grid-column: 1 / -1; border-radius: 12px; overflow: hidden;">';
+      if (banner.link_url) html += '<a href="' + banner.link_url + '" style="display:block;">';
+      html += '<picture>';
+      if (banner.mobile_image) html += '<source media="(max-width: 600px)" srcset="/uploads/banners/' + banner.mobile_image + '">';
+      html += '<img src="/uploads/banners/' + banner.desktop_image + '" alt="" style="width: 100%; height: auto; display: block; border-radius: 12px;" loading="lazy">';
+      html += '</picture>';
+      if (banner.link_url) html += '</a>';
+      html += '</div>';
+      return html;
+    }
+
+    function loadMoreProducts() {
+      if (isLoadingMore || !hasMoreProducts) return;
+      isLoadingMore = true;
+      currentPage++;
+      document.getElementById('loadingMore').style.display = 'block';
+
+      fetch('/api/products?page=' + currentPage + '&limit=6')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.products && data.products.length > 0) {
+          var grid = document.querySelector('.products-grid');
+          var apiBanners = data.banners || [];
+          var apiInterval = data.bannerInterval || 4;
+
+          data.products.forEach(function(p) {
+            if (apiBanners.length > 0 && totalProductCount > 0 && totalProductCount % apiInterval === 0) {
+              var b = apiBanners[bannerIdx % apiBanners.length];
+              bannerIdx++;
+              var bannerDiv = document.createElement('div');
+              bannerDiv.innerHTML = createBannerHtml(b);
+              grid.appendChild(bannerDiv.firstChild);
+            }
+            totalProductCount++;
+
+            var card = document.createElement('a');
+            card.href = '/product/' + p.slug;
+            card.className = 'product-card';
+            card.style.cssText = 'text-decoration: none; cursor: pointer; background: var(--color-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s; display: block;';
+
+            var imgHtml = '';
+            if (p.main_image) {
+              imgHtml = '<img src="/uploads/products/' + p.main_image + '" alt="' + p.title + '" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">';
+            } else {
+              imgHtml = '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: #ccc;">&#x1f6cd;&#xfe0f;</div>';
+            }
+
+            var discountBadge = '';
+            if (p.old_price && p.old_price > p.price) {
+              discountBadge = '<span style="position: absolute; top: 8px; left: 8px; background: var(--color-discount); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px;">-' + Math.round(((p.old_price - p.price) / p.old_price) * 100) + '%</span>';
+            }
+
+            var oldPriceHtml = '';
+            if (p.old_price && p.old_price > p.price) {
+              oldPriceHtml = '<span style="font-size: 12px; color: var(--color-text-muted); text-decoration: line-through;">' + p.old_price + '</span>';
+            }
+
+            card.innerHTML = '<div style="width: 100%; aspect-ratio: 1; overflow: hidden; background: var(--color-bg-warm); position: relative;">' + imgHtml + discountBadge + '</div>' +
+              '<div style="padding: 10px 12px 14px;">' +
+              '<h3 style="font-size: 13px; font-weight: 600; color: var(--color-text); margin: 0 0 6px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">' + p.title + '</h3>' +
+              '<div style="display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap;">' +
+              '<span style="font-size: 16px; font-weight: 800; color: var(--color-primary);">' + p.price + ' <span style="font-size: 12px; font-weight: 600;"><%= t("currency") %></span></span>' +
+              oldPriceHtml +
+              '</div></div>';
+
+            grid.appendChild(card);
+          });
+          hasMoreProducts = data.hasMore;
+        } else {
+          hasMoreProducts = false;
+        }
+        isLoadingMore = false;
+        document.getElementById('loadingMore').style.display = 'none';
+      })
+      .catch(function() {
+        isLoadingMore = false;
+        document.getElementById('loadingMore').style.display = 'none';
+      });
+    }
+    <% } %>
+
+    // Slider logic
+    var currentSlide = 0;
+    var totalSlides = <%= typeof sliders !== 'undefined' && sliders ? sliders.length : 0 %>;
+
+    function slideTo(index) {
+      currentSlide = index;
+      var container = document.getElementById('sliderContainer');
+      if (container) {
+        container.style.transform = 'translateX(' + (currentSlide * (100 / totalSlides)) + '%)';
+      }
+      document.querySelectorAll('.slider-dot').forEach(function(dot, i) {
+        dot.style.background = i === currentSlide ? 'var(--color-primary)' : 'rgba(255,255,255,0.6)';
+        dot.classList.toggle('active', i === currentSlide);
+      });
+    }
+
+    function slideNext() {
+      slideTo((currentSlide + 1) % totalSlides);
+    }
+
+    function slidePrev() {
+      slideTo((currentSlide - 1 + totalSlides) % totalSlides);
+    }
+
+    // Auto-slide
+    if (totalSlides > 1) {
+      setInterval(function() { slideNext(); }, 5000);
+    }
+  </script>
+  <script src="/js/main.js"></script>
+</body>
+</html>

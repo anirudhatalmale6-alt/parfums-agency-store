@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <title><%= (product.meta_title ? product.meta_title : product.title) %> — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+  <%- include('partials/head') %>
+  <% if (product.meta_description) { %><meta name="description" content="<%= product.meta_description %>"><% } %>
+  <% if (product.meta_title || product.title) { %><meta property="og:title" content="<%= product.meta_title || product.title %>"><% } %>
+  <% if (product.meta_description || product.description) { %><meta property="og:description" content="<%= product.meta_description || (product.description || '').substring(0, 200) %>"><% } %>
+  <% if (product.main_image) { %><meta property="og:image" content="/uploads/products/<%= product.main_image %>"><% } %>
+</head>
+<body>
+
+  <div class="pattern-overlay"></div>
+
+  <!-- Audio Autoplay -->
+  <% if (product.audio_filename && product.audio_autoplay) { %>
+  <audio id="productAudio" src="/uploads/products/<%= product.audio_filename %>" autoplay loop></audio>
+  <button type="button" id="audioToggleBtn" onclick="toggleProductAudio()" style="
+    position: fixed; bottom: 20px; left: 20px; z-index: 9999;
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--color-primary); color: #fff; border: none;
+    font-size: 20px; cursor: pointer; box-shadow: var(--shadow-md);
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition-fast);
+  ">🔊</button>
+  <% } %>
+
+  <!-- Navbar -->
+  <%- include('partials/navbar', { product }) %>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero__grid">
+        <div class="hero__content">
+          <% var prodAvail = product.availability_status || 'in_stock'; %>
+          <% if (prodAvail === 'out_of_stock') { %>
+          <div class="hero__badge" style="background: rgba(198,40,40,0.1); color: #c62828;">
+            <span class="hero__badge-dot" style="background: #c62828;"></span>
+            <%= t('out_of_stock') %>
+          </div>
+          <% } else if (prodAvail === 'preorder') { %>
+          <div class="hero__badge" style="background: rgba(245,127,23,0.1); color: #f57f17;">
+            <span class="hero__badge-dot" style="background: #f57f17;"></span>
+            <%= t('preorder') %>
+          </div>
+          <% } else { %>
+          <div class="hero__badge">
+            <span class="hero__badge-dot"></span>
+            <%= t('in_stock') %>
+          </div>
+          <% } %>
+          <h1 class="hero__title">
+            <%= product.title %>
+          </h1>
+          <a href="/product/<%= product.slug %>/reviews" class="hero__rating">
+            <span class="hero__rating-stars"><% for (let i = 1; i <= 5; i++) { %><%= i <= Math.round(avgRating) ? '★' : '☆' %><% } %></span>
+            <span class="hero__rating-count"><%= avgRating %> — <%= reviewCount %> <%= t('reviews_count') %></span>
+            <span class="hero__rating-link"><%= t('view_reviews') %> ←</span>
+          </a>
+          <p class="hero__desc">
+            <%= product.description %>
+          </p>
+
+          <!-- Variations -->
+          <% if (typeof sizeVariations !== 'undefined' && sizeVariations && sizeVariations.length > 0) { %>
+          <div class="product-variations" style="margin-top: 12px; margin-bottom: 8px;">
+            <label style="display: block; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--color-primary-dark);"><%= t('choose_size') %>:</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+              <% sizeVariations.forEach(function(v, idx) { %>
+                <button type="button" class="variation-btn size-variation-btn<%= idx === 0 ? ' active' : '' %>"
+                  data-variation-id="<%= v.id %>"
+                  data-price-adjustment="<%= v.price_adjustment %>"
+                  onclick="selectSizeVariation(this)"
+                  style="
+                    padding: 8px 16px; border-radius: 50px; border: 2px solid var(--color-border);
+                    background: var(--color-card); cursor: pointer; font-family: var(--font-body);
+                    font-size: 13px; font-weight: 700; color: var(--color-text);
+                    transition: var(--transition-fast); min-width: 42px; text-align: center;
+                  "><%= v.label %>
+                  <% if (v.price_adjustment > 0) { %><span style="font-size: 11px; color: var(--color-text-muted);"> (+<%= v.price_adjustment %> د.م)</span><% } %>
+                  <% if (v.price_adjustment < 0) { %><span style="font-size: 11px; color: var(--color-success);"> (<%= v.price_adjustment %> د.م)</span><% } %>
+                </button>
+              <% }); %>
+            </div>
+          </div>
+          <% } %>
+
+          <% if (typeof colorVariations !== 'undefined' && colorVariations && colorVariations.length > 0) { %>
+          <div class="product-variations" style="margin-top: 8px; margin-bottom: 8px;">
+            <label style="display: block; font-weight: 700; font-size: 14px; margin-bottom: 8px; color: var(--color-primary-dark);"><%= t('choose_color') %>:</label>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <% colorVariations.forEach(function(v, idx) { %>
+                <button type="button" class="variation-btn color-variation-btn<%= idx === 0 ? ' active' : '' %>"
+                  data-variation-id="<%= v.id %>"
+                  data-price-adjustment="<%= v.price_adjustment %>"
+                  onclick="selectColorVariation(this)"
+                  title="<%= v.label %>"
+                  style="
+                    width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--color-border);
+                    cursor: pointer; padding: 0; overflow: hidden; position: relative;
+                    transition: var(--transition-fast);
+                    <% if (v.image_filename) { %>
+                      background-image: url('/uploads/variations/<%= v.image_filename %>');
+                      background-size: cover; background-position: center;
+                    <% } else if (v.value) { %>
+                      background-color: <%= v.value %>;
+                    <% } else { %>
+                      background-color: #ccc;
+                    <% } %>
+                  ">
+                </button>
+              <% }); %>
+            </div>
+            <div id="selectedColorLabel" style="margin-top: 6px; font-size: 13px; color: var(--color-text-secondary);">
+              <% if (colorVariations.length > 0) { %><%= colorVariations[0].label %><% } %>
+            </div>
+          </div>
+          <% } %>
+
+          <div class="hero__price" id="heroPrice">
+            <span class="hero__price-current" id="currentPrice"><%= product.price %> <%= t('currency') %></span>
+            <% if (product.old_price) { %>
+              <span class="hero__price-old"><%= product.old_price %> <%= t('currency') %></span>
+            <% } %>
+            <% if (product.discount) { %>
+              <span class="hero__price-badge">-<%= product.discount %>%</span>
+            <% } %>
+          </div>
+          <% if (product.stock_quantity !== null && product.stock_quantity >= 0 && product.stock_quantity <= 10) { %>
+            <div style="font-size: 13px; font-weight: 700; color: var(--color-error); margin-top: 4px; margin-bottom: 4px;"><%= product.stock_quantity === 0 ? t('sold_out') : t('only_left_prefix') + ' ' + product.stock_quantity + ' ' + t('only_left_suffix') %></div>
+          <% } %>
+          <div class="hero__actions" style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <% if (prodAvail !== 'out_of_stock' && (product.stock_quantity === null || product.stock_quantity < 0 || product.stock_quantity > 0)) { %>
+            <a href="/product/<%= product.slug %>/checkout" id="buyNowBtn" class="btn btn--primary btn--lg">
+              <%= t('buy_now') %>
+            </a>
+            <button type="button" class="btn btn--outline btn--lg" id="addToCartBtn" onclick="addToCartFromProduct()">
+              <%= t('add_to_cart') %>
+            </button>
+            <% } else { %>
+            <button type="button" class="btn btn--lg" style="background: #ccc; color: #666; cursor: not-allowed;" disabled><%= t('out_of_stock') %></button>
+            <% } %>
+          </div>
+        </div>
+        <div class="hero__image">
+          <div class="hero__image-decorator"></div>
+          <div class="hero__image-wrapper">
+            <% if (product.main_image) { %>
+              <img src="/uploads/products/<%= product.main_image %>" alt="<%= product.title %>" style="width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-lg);">
+            <% } else if (product.video_filename) { %>
+              <video class="hero__video" autoplay muted loop playsinline poster="">
+                <source src="/uploads/products/<%= product.video_filename %>" type="video/mp4">
+              </video>
+              <div class="hero__video-fallback">🧴</div>
+              <div class="hero__video-overlay"></div>
+            <% } else { %>
+              <div class="hero__image-placeholder">🧴</div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Description Images Section (Landing-page style, full-width) -->
+  <%
+    var descImages = [];
+    try { descImages = JSON.parse(product.description_images || '[]'); } catch(e) {}
+  %>
+  <% if (descImages && descImages.length > 0) { %>
+  <section class="description-images-section" style="padding: 0; margin: 16px 0 0 0;">
+    <div style="max-width: 900px; margin: 0 auto; padding: 0 16px;">
+      <% descImages.forEach(function(imgFile) { %>
+        <div style="margin-bottom: 0; text-align: center;">
+          <img src="/uploads/products/<%= imgFile %>" alt="<%= product.title %>"
+            style="width: 100%; max-width: 100%; height: auto; display: block; margin: 0 auto;" loading="lazy">
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- Features Section -->
+  <% if (product.features && product.features.length) { %>
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-header__label"><%= t('why_our_product') %></span>
+        <h2 class="section-header__title"><%= t('features_best_choice') %></h2>
+        <div class="section-header__divider"></div>
+      </div>
+      <div class="features__grid">
+        <% product.features.forEach(function(feature) { %>
+          <div class="feature-card animate-on-scroll">
+            <div class="feature-card__icon"><span><%= feature.icon %></span></div>
+            <h3 class="feature-card__title"><%= feature.title %></h3>
+            <p class="feature-card__desc"><%= feature.desc %></p>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- Gallery Section -->
+  <% if (product.show_gallery && galleryImages && galleryImages.length > 0) { %>
+  <section class="gallery">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-header__label"><%= t('product_photos') %></span>
+        <h2 class="section-header__title"><%= t('view_all_angles') %></h2>
+        <div class="section-header__divider"></div>
+      </div>
+      <div class="gallery__grid">
+        <% galleryImages.forEach(function(img) { %>
+          <div class="gallery__item animate-on-scroll">
+            <img src="/uploads/products/<%= img.filename %>" alt="<%= product.title %>" style="width:100%; height:100%; object-fit:cover; border-radius: var(--radius-md);" loading="lazy">
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- FAQ Section -->
+  <% if (typeof faqs !== 'undefined' && faqs && faqs.length > 0) { %>
+  <section class="faq-section" id="faq">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-header__label"><%= t('faq') %></span>
+        <h2 class="section-header__title"><%= t('faq_title') %></h2>
+        <div class="section-header__divider"></div>
+      </div>
+      <div class="faq-list" style="max-width: 800px; margin: 0 auto;">
+        <% faqs.forEach(function(faq, idx) { %>
+          <div class="faq-item animate-on-scroll" style="background: var(--color-bg-card, #fff); border-radius: var(--radius-md, 16px); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); overflow: hidden;">
+            <button type="button" class="faq-question" onclick="toggleFaq(this)" style="width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border: none; background: none; cursor: pointer; font-family: inherit; font-size: 16px; font-weight: 700; color: var(--color-primary, #6B5335); text-align: right; gap: 16px; direction: rtl;">
+              <span><%= faq.question %></span>
+              <span class="faq-arrow" style="font-size: 20px; transition: transform 0.3s; flex-shrink: 0;">▼</span>
+            </button>
+            <div class="faq-answer" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease;">
+              <div style="padding: 0 24px 20px; color: var(--color-text, #555); font-size: 15px; line-height: 1.8;">
+                <%= faq.answer %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- Reviews Section -->
+  <% if (typeof product.show_reviews === 'undefined' || product.show_reviews) { %>
+  <section class="trust">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-header__label"><%= t('customer_feedback') %></span>
+        <h2 class="section-header__title"><%= t('what_customers_say') %></h2>
+        <div class="section-header__divider"></div>
+      </div>
+      <div style="text-align: center; margin-bottom: 24px;">
+        <button type="button" class="btn btn--primary" id="showFeedbackFormBtn" onclick="toggleFeedbackView(true)"><%= t('write_review') %></button>
+      </div>
+      <style>
+        .prv-card { background: var(--color-card); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid var(--color-border-light); }
+        .prv-card[dir="ltr"] { direction: ltr; text-align: left; }
+        .prv-card[dir="rtl"] { direction: rtl; text-align: right; }
+        .prv-card__hdr { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .prv-card__av { width: 44px; height: 44px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; text-transform: uppercase; }
+        .prv-card__nm { font-size: 15px; font-weight: 700; color: var(--color-text); }
+        .prv-card__vf { display: inline-flex; width: 18px; height: 18px; flex-shrink: 0; margin-inline-start: 4px; vertical-align: middle; }
+        .prv-card__vf svg { width: 18px; height: 18px; }
+        .prv-card__body { min-height: 32px; margin-bottom: 10px; }
+        .prv-card__txt { font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); margin: 0; }
+        .prv-card__imgs { display: flex; gap: 8px; margin-bottom: 10px; overflow-x: auto; scrollbar-width: none; }
+        .prv-card__imgs::-webkit-scrollbar { display: none; }
+        .prv-card__imgs img { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; flex-shrink: 0; border: 1px solid var(--color-border-light); cursor: pointer; transition: transform 0.2s; }
+        .prv-card__imgs img:hover { transform: scale(1.05); }
+        .prv-card__stars { color: var(--color-star); font-size: 18px; letter-spacing: 2px; }
+        @media (max-width: 600px) {
+          .prv-card { padding: 14px 16px; border-radius: 12px; }
+          .prv-card__av { width: 38px; height: 38px; font-size: 17px; }
+          .prv-card__nm { font-size: 14px; }
+          .prv-card__txt { font-size: 13px; }
+          .prv-card__imgs img { width: 90px; height: 90px; }
+        }
+      </style>
+      <div id="reviewsDisplay">
+      <% if (reviews && reviews.length) { %>
+        <div>
+          <% reviews.forEach(function(review) { %>
+            <%
+              var _imgs = [];
+              if (review.image_filename) {
+                try { _imgs = JSON.parse(review.image_filename); } catch(e) { _imgs = [review.image_filename]; }
+                _imgs = _imgs.filter(function(img) { return !!img; });
+              }
+              var _pInit = (review.name || '?').charAt(0).toUpperCase();
+              var _pTextCheck = (review.name || '') + ' ' + (review.message || '');
+              var _pIsArabic = /[\u0600-\u06FF]/.test(_pTextCheck);
+              var _pCardDir = _pIsArabic ? 'rtl' : 'ltr';
+            %>
+            <div class="prv-card animate-on-scroll" dir="<%= _pCardDir %>">
+              <div class="prv-card__hdr">
+                <div class="prv-card__av"><%= _pInit %></div>
+                <div>
+                  <span class="prv-card__nm"><%= review.name %></span>
+                  <span class="prv-card__vf"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#1DA1F2"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              </div>
+              <div class="prv-card__body">
+                <% if (review.message) { %><p class="prv-card__txt"><%= review.message %></p><% } %>
+                <% if (review.audio_filename && review.audio_filename.length > 0) { %>
+                  <div class="wa-audio-player" data-src="/uploads/reviews/<%= review.audio_filename %>" style="margin-top: 6px;">
+                    <button type="button" class="wa-play-btn" onclick="toggleWaAudio(this)">▶</button>
+                    <div class="wa-progress-wrap" onclick="seekWaAudio(event, this)"><div class="wa-waveform"></div></div>
+                    <span class="wa-time">0:00</span>
+                  </div>
+                <% } %>
+              </div>
+              <% if (_imgs.length > 0) { %>
+                <div class="prv-card__imgs">
+                  <% _imgs.forEach(function(img) { %><img src="/uploads/reviews/<%= img %>" alt="" loading="lazy"><% }); %>
+                </div>
+              <% } %>
+              <div class="prv-card__stars"><% for (var i = 1; i <= 5; i++) { %><%= i <= review.rating ? '★' : '☆' %><% } %></div>
+            </div>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <div style="text-align: center; padding: 40px 0; color: var(--color-text-muted);">
+          <p style="font-size: 18px; margin-bottom: 8px;"><%= t('no_reviews_yet') %></p>
+          <p style="font-size: 14px;"><%= t('be_first_reviewer') %></p>
+        </div>
+      <% } %>
+      </div>
+    </div>
+  </section>
+
+  <!-- Feedback Submission Section -->
+  <section class="feedback-section" id="feedback" style="display: none;">
+    <div class="container container--narrow">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <button type="button" class="btn btn--outline" onclick="toggleFeedbackView(false)"><%= t('back_to_reviews') %></button>
+      </div>
+      <div class="section-header animate-on-scroll">
+        <span class="section-header__label"><%= t('share_experience') %></span>
+        <h2 class="section-header__title"><%= t('we_love_hearing') %></h2>
+        <div class="section-header__divider"></div>
+      </div>
+      <div class="feedback-card animate-on-scroll">
+        <form id="feedbackForm" class="feedback-form" data-slug="<%= product.slug %>" action="/product/<%= product.slug %>/review" method="POST" enctype="multipart/form-data">
+          <div class="feedback-form__row">
+            <div class="form-group">
+              <input type="text" id="feedbackName" name="name" class="form-input" placeholder="<%= t('your_name') %> *" required>
+              <div class="form-error"><%= t('enter_name') %></div>
+            </div>
+            <div class="form-group">
+              <input type="tel" id="feedbackPhone" name="phone" class="form-input" placeholder="<%= t('your_phone') %> *" required dir="ltr" style="text-align: left;">
+              <div class="form-error"><%= t('enter_phone') %></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="feedback-stars" id="feedbackStars">
+              <span class="feedback-star" data-rating="1">☆</span>
+              <span class="feedback-star" data-rating="2">☆</span>
+              <span class="feedback-star" data-rating="3">☆</span>
+              <span class="feedback-star" data-rating="4">☆</span>
+              <span class="feedback-star" data-rating="5">☆</span>
+            </div>
+            <input type="hidden" id="feedbackRating" name="rating" value="5">
+          </div>
+          <div class="form-group">
+            <textarea id="feedbackMessage" name="message" class="form-input form-textarea" placeholder="<%= t('your_review') %>" rows="4"></textarea>
+          </div>
+          <!-- Image Upload (up to 3) -->
+          <div class="form-group">
+            <div class="feedback-upload-zone" id="feedbackImageZone">
+              <div class="feedback-upload-zone__icon">📷</div>
+              <div class="feedback-upload-zone__text"><%= t('photos') %></div>
+              <div class="feedback-upload-zone__hint">JPG, PNG — Max 10MB</div>
+              <input type="file" id="feedbackImage" name="images" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" multiple onchange="previewFeedbackImages(this)">
+            </div>
+            <div id="feedbackImagePreviews" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
+          </div>
+          <!-- Voice Recording -->
+          <div class="form-group">
+            <div class="voice-recorder" id="voiceRecorder">
+              <button type="button" class="voice-recorder__btn" id="voiceRecordBtn">
+                <span class="voice-recorder__icon">🎙️</span>
+                <span class="voice-recorder__label"><%= t('voice_note') %></span>
+              </button>
+              <div class="voice-recorder__status" id="voiceStatus"></div>
+              <div class="voice-recorder__player" id="voicePlayer">
+                <audio id="voiceAudio" controls></audio>
+                <button type="button" class="voice-recorder__remove" id="voiceRemoveBtn"><%= t('delete_recording') %></button>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn--primary" id="feedbackSubmitBtn" data-original-text="<%= t('submit_review') %>" data-sending-text="<%= t('sending_review') %>">
+            <%= t('submit_review') %>
+          </button>
+          <p class="feedback-form__note"><%= t('review_moderation_note') %></p>
+        </form>
+        <!-- Success state (hidden by default) -->
+        <div class="feedback-success" id="feedbackSuccess">
+          <div class="feedback-success__icon">✅</div>
+          <h3 class="feedback-success__title"><%= t('thanks_for_review') %></h3>
+          <p class="feedback-success__text"><%= t('review_submitted') %></p>
+          <button type="button" class="btn btn--outline" onclick="resetFeedbackForm()"><%= t('send_another_review') %></button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <% } /* end show_reviews */ %>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-section__inner animate-on-scroll">
+        <h2 class="cta-section__title"><%= t('dont_miss_offer') %></h2>
+        <p class="cta-section__desc">
+          <%= t('cta_desc') %>
+        </p>
+        <a href="/product/<%= product.slug %>/checkout" class="btn btn--primary btn--lg">
+          <%= t('order_now') %> — <%= product.price %> <%= t('currency') %>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <%- include('partials/footer') %>
+
+  <style>
+    .variation-btn.active {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 2px var(--color-primary-light);
+    }
+    .color-variation-btn.active {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+      transform: scale(1.1);
+    }
+  </style>
+
+  <script>
+    var PRODUCT_BASE_PRICE = <%= product.price %>;
+    var PRODUCT_SLUG = '<%= product.slug %>';
+    var PRODUCT_ID = <%= product.id %>;
+    var T_CURRENCY = '<%= t("currency") %>';
+    var T_ADDING = '<%= t("adding_to_cart") %>';
+    var T_ADDED_TO_CART = '<%= t("added_to_cart") %>';
+    var T_ADD_TO_CART = '<%= t("add_to_cart") %>';
+    var T_ERROR = '<%= t("error_occurred") %>';
+    var T_CONNECTION_ERROR = '<%= t("connection_error") %>';
+    var T_MAX_3_PHOTOS = '<%= t("max_3_photos") %>';
+    var T_IMAGES_ONLY = '<%= t("images_only") %>';
+    var T_IMAGE_TOO_LARGE = '<%= t("image_too_large") %>';
+    var T_CLICK_UPLOAD_PHOTOS = '<%= t("photos") %>';
+    var T_PHOTOS_SELECTED = '<%= t("photos_selected") %>';
+    var selectedSizeId = null;
+    var selectedColorId = null;
+    var sizePriceAdj = 0;
+    var colorPriceAdj = 0;
+
+    // Initialize default selections
+    (function() {
+      var firstSize = document.querySelector('.size-variation-btn');
+      if (firstSize) {
+        selectedSizeId = parseInt(firstSize.dataset.variationId);
+        sizePriceAdj = parseFloat(firstSize.dataset.priceAdjustment) || 0;
+      }
+      var firstColor = document.querySelector('.color-variation-btn');
+      if (firstColor) {
+        selectedColorId = parseInt(firstColor.dataset.variationId);
+        colorPriceAdj = parseFloat(firstColor.dataset.priceAdjustment) || 0;
+      }
+    })();
+
+    function selectSizeVariation(btn) {
+      document.querySelectorAll('.size-variation-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedSizeId = parseInt(btn.dataset.variationId);
+      sizePriceAdj = parseFloat(btn.dataset.priceAdjustment) || 0;
+      updateDisplayedPrice();
+    }
+
+    function selectColorVariation(btn) {
+      document.querySelectorAll('.color-variation-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedColorId = parseInt(btn.dataset.variationId);
+      colorPriceAdj = parseFloat(btn.dataset.priceAdjustment) || 0;
+      var label = document.getElementById('selectedColorLabel');
+      if (label) label.textContent = btn.title;
+      updateDisplayedPrice();
+    }
+
+    function updateDisplayedPrice() {
+      var total = PRODUCT_BASE_PRICE + sizePriceAdj + colorPriceAdj;
+      var priceEl = document.getElementById('currentPrice');
+      if (priceEl) priceEl.textContent = total + ' ' + T_CURRENCY;
+    }
+
+    function addToCartFromProduct() {
+      var btn = document.getElementById('addToCartBtn');
+      btn.disabled = true;
+      btn.innerHTML = T_ADDING;
+
+      fetch('/cart/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product_id: PRODUCT_ID,
+          quantity: 1,
+          size_variation_id: selectedSizeId,
+          color_variation_id: selectedColorId
+        })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.success) {
+          showToast(T_ADDED_TO_CART, 'success');
+          // Update cart badge if exists
+          var badge = document.getElementById('cartBadge');
+          if (badge) {
+            badge.textContent = data.cartCount || '';
+            badge.style.display = (data.cartCount > 0) ? 'flex' : 'none';
+          }
+        } else {
+          showToast(data.error || T_ERROR, 'error');
+        }
+        btn.disabled = false;
+        btn.innerHTML = T_ADD_TO_CART;
+      })
+      .catch(function(err) {
+        showToast(T_CONNECTION_ERROR, 'error');
+        btn.disabled = false;
+        btn.innerHTML = T_ADD_TO_CART;
+      });
+    }
+
+    function toggleProductAudio() {
+      var audio = document.getElementById('productAudio');
+      var btn = document.getElementById('audioToggleBtn');
+      if (!audio) return;
+      if (audio.muted || audio.paused) {
+        audio.muted = false;
+        audio.play().catch(function(){});
+        btn.textContent = '🔊';
+      } else {
+        audio.muted = true;
+        btn.textContent = '🔇';
+      }
+    }
+
+    // Auto-play with muted first (browsers require user interaction for unmuted autoplay)
+    (function() {
+      var audio = document.getElementById('productAudio');
+      if (audio) {
+        audio.muted = true;
+        audio.play().then(function() {
+          // Auto-play succeeded muted, try unmuted after user interaction
+          document.addEventListener('click', function unmute() {
+            audio.muted = false;
+            var btn = document.getElementById('audioToggleBtn');
+            if (btn) btn.textContent = '🔊';
+            document.removeEventListener('click', unmute);
+          }, { once: true });
+        }).catch(function(){});
+      }
+    })();
+
+    function toggleFaq(btn) {
+      var item = btn.parentElement;
+      var answer = item.querySelector('.faq-answer');
+      var arrow = btn.querySelector('.faq-arrow');
+      var isOpen = answer.style.maxHeight && answer.style.maxHeight !== '0px';
+      if (isOpen) {
+        answer.style.maxHeight = '0';
+        arrow.style.transform = 'rotate(0deg)';
+      } else {
+        answer.style.maxHeight = answer.scrollHeight + 'px';
+        arrow.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    function toggleFeedbackView(showForm) {
+      var reviewsDisplay = document.getElementById('reviewsDisplay');
+      var feedbackSection = document.getElementById('feedback');
+      var showBtn = document.getElementById('showFeedbackFormBtn');
+      if (showForm) {
+        reviewsDisplay.style.display = 'none';
+        showBtn.style.display = 'none';
+        feedbackSection.style.display = 'block';
+        feedbackSection.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        reviewsDisplay.style.display = '';
+        showBtn.style.display = '';
+        feedbackSection.style.display = 'none';
+        document.querySelector('.trust').scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function previewFeedbackImages(input) {
+      var previewContainer = document.getElementById('feedbackImagePreviews');
+      var zone = document.getElementById('feedbackImageZone');
+      var zoneText = zone ? zone.querySelector('.feedback-upload-zone__text') : null;
+      var zoneIcon = zone ? zone.querySelector('.feedback-upload-zone__icon') : null;
+      previewContainer.innerHTML = '';
+
+      if (!input.files || input.files.length === 0) {
+        if (zoneText) zoneText.textContent = T_CLICK_UPLOAD_PHOTOS;
+        if (zoneIcon) zoneIcon.textContent = '📷';
+        return;
+      }
+
+      if (input.files.length > 3) {
+        showToast(T_MAX_3_PHOTOS, 'error');
+        input.value = '';
+        if (zoneText) zoneText.textContent = T_CLICK_UPLOAD_PHOTOS;
+        if (zoneIcon) zoneIcon.textContent = '📷';
+        return;
+      }
+
+      var validFiles = 0;
+      for (var i = 0; i < input.files.length; i++) {
+        var file = input.files[i];
+        if (!file.type.startsWith('image/')) {
+          showToast(T_IMAGES_ONLY, 'error');
+          continue;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+          showToast(T_IMAGE_TOO_LARGE, 'error');
+          continue;
+        }
+        validFiles++;
+        (function(f) {
+          var reader = new FileReader();
+          reader.onload = function(evt) {
+            var div = document.createElement('div');
+            div.style.cssText = 'position:relative; width:80px; height:80px; border-radius:8px; overflow:hidden; border:2px solid var(--color-border,#e8e0d8); flex-shrink:0;';
+            div.innerHTML = '<img src="' + evt.target.result + '" style="width:100%;height:100%;object-fit:cover;" alt="">';
+            previewContainer.appendChild(div);
+          };
+          reader.readAsDataURL(f);
+        })(file);
+      }
+
+      if (validFiles > 0) {
+        if (zoneText) zoneText.textContent = validFiles + ' ' + T_PHOTOS_SELECTED;
+        if (zoneIcon) zoneIcon.textContent = '✅';
+      }
+    }
+  </script>
+  <script src="/js/main.js"></script>
+</body>
+</html>
