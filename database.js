@@ -499,6 +499,24 @@ async function initDatabase() {
   addColumnIfNotExists('orders', 'shipping_company_id', "ALTER TABLE orders ADD COLUMN shipping_company_id INTEGER DEFAULT NULL");
   addColumnIfNotExists('orders', 'shipping_company_name', "ALTER TABLE orders ADD COLUMN shipping_company_name TEXT DEFAULT ''");
 
+  // v_checkout: secure token per order (for tracking link)
+  addColumnIfNotExists('orders', 'pay_token', "ALTER TABLE orders ADD COLUMN pay_token TEXT DEFAULT ''");
+
+  // Seed default shipping companies if none exist
+  const shippingCount = db.prepare('SELECT COUNT(*) as count FROM shipping_companies').get();
+  if (shippingCount.count === 0) {
+    const shippingDefaults = [
+      { name: 'أمانة إكسبريس', payment_mode: 'advance', advance_amount: 50,  delivery_fee: 30, delivery_time: '24 - 48 ساعة', description: 'تسبيق 50 درهم والباقي عند الاستلام', sort_order: 0 },
+      { name: 'غزال إكسبريس',  payment_mode: 'full',    advance_amount: 0,   delivery_fee: 0,  delivery_time: '24 - 48 ساعة', description: 'دفع كامل — توصيل مجاني',            sort_order: 1 },
+      { name: 'سيتي إكسبريس', payment_mode: 'full',    advance_amount: 0,   delivery_fee: 25, delivery_time: '48 - 72 ساعة', description: 'دفع كامل',                            sort_order: 2 },
+    ];
+    shippingDefaults.forEach(c => {
+      db.prepare(`INSERT INTO shipping_companies (name, payment_mode, advance_amount, delivery_fee, delivery_time, description, is_active, sort_order) VALUES (?,?,?,?,?,?,1,?)`)
+        .run(c.name, c.payment_mode, c.advance_amount, c.delivery_fee, c.delivery_time, c.description, c.sort_order);
+    });
+    console.log('Default shipping companies seeded (Amana / Ghazal / City)');
+  }
+
   // Custom Pages table
   db.exec(`
     CREATE TABLE IF NOT EXISTS custom_pages (

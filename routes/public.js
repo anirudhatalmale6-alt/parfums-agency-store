@@ -80,6 +80,12 @@ function generateOrderRef() {
   return 'ORD-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
+// Generates a 40-char hex token — used as a secret order tracking URL
+function generatePayToken() {
+  const { randomBytes } = require('crypto');
+  return randomBytes(20).toString('hex');
+}
+
 // Helper: Get admin setting
 function getSetting(key, defaultValue) {
   try {
@@ -428,6 +434,7 @@ router.post('/product/:slug/checkout', (req, res) => {
     }
 
     const orderRef = generateOrderRef();
+    const payToken = generatePayToken();
     const referralCode = req.session.referral_code || '';
     const gift = getEligibleGift(totalPrice);
     const giftInfo = gift ? JSON.stringify({ name: gift.name, description: gift.description }) : '';
@@ -436,15 +443,16 @@ router.post('/product/:slug/checkout', (req, res) => {
       INSERT INTO orders (product_id, order_ref, full_name, phone, quantity, unit_price, total_price,
         delivery_option, payment_amount, remaining_amount, receipt_filename, status,
         payment_type, variation_info, referral_code, gift_info, city, address,
-        shipping_company_id, shipping_company_name)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        shipping_company_id, shipping_company_name, pay_token)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       product.id, orderRef, fullName, phone, qty, unitPrice,
       totalPrice, deliveryOption, paymentAmount, remainingAmount,
       '', 'pending',
       paymentType, variation_info || '', referralCode, giftInfo,
       city || '', address || '',
-      shipping_company_id || null, shippingCompanyName
+      shipping_company_id || null, shippingCompanyName,
+      payToken
     );
 
     // Handle referral commission
@@ -470,15 +478,8 @@ router.post('/product/:slug/checkout', (req, res) => {
       }
     }
 
-    // Render step 2 (order confirmation)
-    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(orderRef);
-    res.render('checkout-step2', {
-      orderRef,
-      order,
-      product,
-      shippingCompany,
-      checkoutMode: 'single'
-    });
+    // Redirect to step 2 via secure token
+    res.redirect('/checkout/' + payToken);
   } catch (err) {
     console.error('Checkout step1 POST error:', err);
     res.status(500).render('404');
@@ -890,6 +891,7 @@ router.post('/cart/checkout', (req, res) => {
     }
 
     const orderRef = generateOrderRef();
+    const payToken = generatePayToken();
     const referralCode = req.session.referral_code || '';
     const gift = getEligibleGift(cartTotal);
     const giftInfo = gift ? JSON.stringify({ name: gift.name }) : '';
@@ -912,8 +914,8 @@ router.post('/cart/checkout', (req, res) => {
       INSERT INTO orders (product_id, order_ref, full_name, phone, quantity, unit_price, total_price,
         delivery_option, payment_amount, remaining_amount, receipt_filename, status,
         payment_type, variation_info, referral_code, gift_info, city, address,
-        shipping_company_id, shipping_company_name)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        shipping_company_id, shipping_company_name, pay_token)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       rawItems[0].pid, orderRef, fullName, phone,
       rawItems.reduce((sum, i) => sum + i.quantity, 0),
@@ -922,7 +924,8 @@ router.post('/cart/checkout', (req, res) => {
       '', 'pending',
       paymentType, JSON.stringify(variationDetails), referralCode, giftInfo,
       city || '', address || '',
-      shipping_company_id || null, shippingCompanyName
+      shipping_company_id || null, shippingCompanyName,
+      payToken
     );
 
     // Handle referral commission
@@ -951,15 +954,8 @@ router.post('/cart/checkout', (req, res) => {
     // Clear cart
     db.prepare('DELETE FROM cart_items WHERE session_id = ?').run(sessionId);
 
-    // Render step 2
-    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(orderRef);
-    res.render('checkout-step2', {
-      orderRef,
-      order,
-      shippingCompany,
-      checkoutMode: 'cart',
-      cartItems
-    });
+    // Redirect to step2 via secure token
+    res.redirect('/checkout/' + payToken);
   } catch (err) {
     console.error('Cart checkout error:', err);
     res.status(500).render('404');
@@ -968,18 +964,68 @@ router.post('/cart/checkout', (req, res) => {
 
 
 // ============================================================
-// CHECKOUT STEP 3: Bank payment + receipt upload
+// CHECKOUT STEP 2: Order confirmation page (via secure token)
+// GET /checkout/:token
 // ============================================================
-router.get('/checkout/step3/:orderRef', (req, res) => {
+router.get('/checkout/:token', (req, res) => {
   try {
-    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(req.params.orderRef);
+    const token = req.params.token;
+    const order = db.prepare('SELECT * FROM orders WHERE pay_token = ?').get(token);
     if (!order) return res.status(404).render('404');
 
-    const bankSettings = getBankSettings();
     let product = null;
-    if (order.product_id) {
-      product = db.prepare('SELECT * FROM products WHERE id = ?').get(order.product_id);
+    try { product = db.prepare('SELECT * FROM products WHERE id = ?').get(order.product_id); } catch(e) {}
+
+    let shippingCompany = null;
+    if (order.shipping_company_id) {
+      try { shippingCompany = db.prepare('SELECT * FROM shipping_companies WHERE id = ?').get(order.shipping_company_id); } catch(e) {}
     }
+
+    // Cart items (multi-product orders)
+    let cartItems = [];
+    if (order.variation_info) {
+      try {
+        const parsed = JSON.parse(order.variation_info);
+        if (Array.isArray(parsed) && parsed.length > 1) cartItems = parsed;
+      } catch(e) {}
+    }
+
+    res.render('checkout-step2', {
+      orderRef: order.order_ref,
+      payToken: token,
+      order,
+      product,
+      shippingCompany,
+      cartItems,
+      checkoutMode: cartItems.length > 0 ? 'cart' : 'single'
+    });
+  } catch (err) {
+    console.error('Checkout step2 error:', err);
+    res.status(500).render('404');
+  }
+});
+
+
+// ============================================================
+// CHECKOUT STEP 3: Payment page (via secure token)
+// GET /checkout/:token/pay
+// ============================================================
+router.get('/checkout/:token/pay', (req, res) => {
+  try {
+    const token = req.params.token;
+    const order = db.prepare('SELECT * FROM orders WHERE pay_token = ?').get(token);
+    if (!order) return res.status(404).render('404');
+
+    // Redirect back to step2 if order already done
+    if (order.status === 'confirmed' || order.status === 'cancelled') {
+      return res.redirect('/checkout/' + token);
+    }
+
+    const bankSettings = getBankSettings();
+
+    let product = null;
+    try { product = db.prepare('SELECT * FROM products WHERE id = ?').get(order.product_id); } catch(e) {}
+
     let shippingCompany = null;
     if (order.shipping_company_id) {
       try { shippingCompany = db.prepare('SELECT * FROM shipping_companies WHERE id = ?').get(order.shipping_company_id); } catch(e) {}
@@ -987,6 +1033,7 @@ router.get('/checkout/step3/:orderRef', (req, res) => {
 
     res.render('checkout-step3', {
       orderRef: order.order_ref,
+      payToken: token,
       order,
       product,
       bankSettings,
@@ -998,25 +1045,40 @@ router.get('/checkout/step3/:orderRef', (req, res) => {
   }
 });
 
-router.post('/checkout/step3/:orderRef', receiptUpload.single('receipt'), (req, res) => {
+
+// POST /checkout/:token/pay — Upload receipt → status: proof_uploaded
+router.post('/checkout/:token/pay', receiptUpload.single('receipt'), (req, res) => {
   try {
-    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(req.params.orderRef);
+    const token = req.params.token;
+    const order = db.prepare('SELECT * FROM orders WHERE pay_token = ?').get(token);
     if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    if (order.status === 'confirmed') return res.status(400).json({ error: 'تم تأكيد الطلب مسبقاً' });
+    if (order.status === 'cancelled') return res.status(400).json({ error: 'تم إلغاء هذا الطلب' });
 
     const receiptFilename = req.file ? req.file.filename : '';
     if (!receiptFilename) {
-      return res.status(400).json({ error: 'يرجى رفع إيصال الدفع' });
+      return res.status(400).json({ error: 'يرجى رفع صورة إيصال الدفع' });
     }
 
-    db.prepare(`
-      UPDATE orders SET receipt_filename = ?, status = 'proof_uploaded' WHERE order_ref = ?
-    `).run(receiptFilename, req.params.orderRef);
+    db.prepare(`UPDATE orders SET receipt_filename = ?, status = 'proof_uploaded' WHERE id = ?`)
+      .run(receiptFilename, order.id);
 
     res.json({ success: true, orderRef: order.order_ref });
   } catch (err) {
     console.error('Checkout step3 POST error:', err);
     res.status(500).json({ error: 'Server error' });
   }
+});
+
+
+// Legacy redirect: old /checkout/step3/:orderRef links still work
+router.get('/checkout/step3/:orderRef', (req, res) => {
+  try {
+    const order = db.prepare('SELECT pay_token FROM orders WHERE order_ref = ?').get(req.params.orderRef);
+    if (order && order.pay_token) return res.redirect(301, '/checkout/' + order.pay_token + '/pay');
+    res.status(404).render('404');
+  } catch(e) { res.status(404).render('404'); }
 });
 
 
@@ -1474,7 +1536,7 @@ router.get('/api/search', (req, res) => {
 router.get('/:username', (req, res) => {
   try {
     // Skip known routes (avoid matching static assets, admin, etc.)
-    const reserved = ['admin', 'api', 'login', 'logout', 'account', 'cart', 'thankyou', 'returns', 'payment-delivery', 'contact', 'product', 'p', 'category', 'feedback', 'pages', 'search', 'favicon.ico'];
+    const reserved = ['admin', 'api', 'login', 'logout', 'account', 'cart', 'checkout', 'thankyou', 'returns', 'payment-delivery', 'contact', 'product', 'p', 'category', 'feedback', 'pages', 'search', 'favicon.ico'];
     if (reserved.includes(req.params.username)) {
       return res.status(404).render('404');
     }

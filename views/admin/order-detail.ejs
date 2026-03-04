@@ -75,8 +75,8 @@
             font-size: 12px; font-weight: 700;
         }
         .badge-pending { background: #fff3e0; color: #e65100; }
-        .badge-paid { background: #e8f5e9; color: #2e7d32; }
-        .badge-delivered { background: #e3f2fd; color: #1565c0; }
+        .badge-proof_uploaded { background: #e3f2fd; color: #1565c0; }
+        .badge-confirmed { background: #e8f5e9; color: #2e7d32; }
         .badge-cancelled { background: #ffebee; color: #c62828; }
         /* Receipt Image */
         .receipt-container { margin-top: 16px; }
@@ -201,7 +201,11 @@
                         <span class="detail-label">الحالة</span>
                         <span class="detail-value">
                             <span class="badge badge-<%= order.status %>">
-                                <%= order.status === 'pending' ? 'معلق' : order.status === 'paid' ? 'مدفوع' : order.status === 'delivered' ? 'تم التسليم' : 'ملغي' %>
+                                <% if (order.status === 'pending') { %>في الانتظار
+                                <% } else if (order.status === 'proof_uploaded') { %>إيصال مرفوع
+                                <% } else if (order.status === 'confirmed') { %>مؤكد
+                                <% } else if (order.status === 'cancelled') { %>ملغي
+                                <% } else { %><%= order.status %><% } %>
                             </span>
                         </span>
                     </div>
@@ -209,6 +213,14 @@
                         <span class="detail-label">تاريخ الطلب</span>
                         <span class="detail-value"><%= new Date(order.created_at).toLocaleString('ar-SA') %></span>
                     </div>
+                    <% if (order.pay_token) { %>
+                    <div class="detail-row">
+                        <span class="detail-label">رابط الطلب</span>
+                        <span class="detail-value" style="font-size:12px;">
+                          <a href="/checkout/<%= order.pay_token %>" target="_blank" style="color:#1565c0;word-break:break-all;">/checkout/<%= order.pay_token.substring(0,12) %>...</a>
+                        </span>
+                    </div>
+                    <% } %>
                 </div>
 
                 <!-- Customer Info -->
@@ -267,10 +279,10 @@
                         <div class="form-group">
                             <label>الحالة الجديدة</label>
                             <select name="status">
-                                <option value="pending" <%= order.status === 'pending' ? 'selected' : '' %>>معلق</option>
-                                <option value="paid" <%= order.status === 'paid' ? 'selected' : '' %>>مدفوع</option>
-                                <option value="delivered" <%= order.status === 'delivered' ? 'selected' : '' %>>تم التسليم</option>
-                                <option value="cancelled" <%= order.status === 'cancelled' ? 'selected' : '' %>>ملغي</option>
+                                <option value="pending"        <%= order.status === 'pending'        ? 'selected' : '' %>>في الانتظار</option>
+                                <option value="proof_uploaded" <%= order.status === 'proof_uploaded' ? 'selected' : '' %>>إيصال مرفوع</option>
+                                <option value="confirmed"      <%= order.status === 'confirmed'      ? 'selected' : '' %>>مؤكد</option>
+                                <option value="cancelled"      <%= order.status === 'cancelled'      ? 'selected' : '' %>>ملغي</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">تحديث الحالة</button>

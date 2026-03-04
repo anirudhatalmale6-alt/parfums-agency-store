@@ -470,16 +470,16 @@
           var formData = new FormData();
           formData.append('receipt', receiptFile);
 
-          fetch('/checkout/step3/<%= orderRef %>', {
+          fetch('/checkout/<%= payToken %>/pay', {
             method: 'POST',
             body: formData
           })
           .then(function(r) { return r.json(); })
           .then(function(data) {
             if (data.success) {
-              sessionStorage.setItem('orderRef', '<%= orderRef %>');
+              sessionStorage.setItem('orderRef', data.orderRef || '<%= orderRef %>');
               sessionStorage.setItem('customerName', data.customerName || '');
-              window.location.href = '/thankyou';
+              window.location.href = '/thankyou?ref=' + (data.orderRef || '<%= orderRef %>');
             } else {
               hideLoading();
               resetSubmitBtn();

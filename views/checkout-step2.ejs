@@ -475,11 +475,33 @@
 
       </div>
 
-      <!-- CTA: Pay via Bank Transfer -->
-      <a href="/checkout/step3/<%= orderRef %>" class="step2-cta" data-turbo="false">
+      <!-- CTA: Go to payment step -->
+      <a href="/checkout/<%= payToken %>/pay" class="step2-cta" data-turbo="false">
         💳 <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Payer par virement bancaire' : 'الدفع عبر التحويل البنكي' %>
       </a>
       <p class="step2-helper"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Veuillez effectuer le paiement pour confirmer votre commande' : 'يرجى إتمام الدفع لتأكيد طلبك' %></p>
+
+      <!-- Order tracking link -->
+      <div style="background:#f0f4ff;border:1.5px solid #dbe4ff;border-radius:12px;padding:14px 18px;margin-bottom:28px;font-size:13px;text-align:center;color:#444;">
+        🔗 <strong><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Lien de suivi de commande' : 'رابط متابعة طلبك' %></strong> — <%= typeof lang !== 'undefined' && lang === 'fr' ? 'conservez-le pour suivre votre commande' : 'احتفظ به للرجوع لطلبك في أي وقت' %>:<br>
+        <span id="trackingLink" style="font-family:monospace;direction:ltr;display:inline-block;margin-top:6px;color:#333;word-break:break-all;font-size:12px;background:#fff;padding:4px 10px;border-radius:6px;border:1px solid #ddd;">
+          <%= (typeof process !== 'undefined' && process.env && process.env.APP_URL ? process.env.APP_URL : '') + '/checkout/' + payToken %>
+        </span>
+        <button onclick="copyTrackingLink()" style="margin-top:8px;display:block;margin-left:auto;margin-right:auto;background:#1a1a2e;color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:12px;cursor:pointer;" id="copyTrackBtn">📋 <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Copier le lien' : 'نسخ الرابط' %></button>
+      </div>
+
+      <script>
+      function copyTrackingLink() {
+        var link = document.getElementById('trackingLink').textContent.trim();
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(link).then(function() {
+            var btn = document.getElementById('copyTrackBtn');
+            btn.textContent = '✅ <%= typeof lang !== "undefined" && lang === "fr" ? "Copié" : "تم النسخ" %>';
+            setTimeout(function(){ btn.textContent = '📋 <%= typeof lang !== "undefined" && lang === "fr" ? "Copier le lien" : "نسخ الرابط" %>'; }, 2000);
+          });
+        }
+      }
+      </script>
 
     </div>
   </div>

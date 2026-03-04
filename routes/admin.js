@@ -176,8 +176,9 @@ router.get('/', requireAdmin, (req, res) => {
     totalProducts: db.prepare('SELECT COUNT(*) as c FROM products').get().c,
     totalOrders: db.prepare('SELECT COUNT(*) as c FROM orders').get().c,
     pendingOrders: db.prepare("SELECT COUNT(*) as c FROM orders WHERE status = 'pending'").get().c,
+    proofUploadedOrders: db.prepare("SELECT COUNT(*) as c FROM orders WHERE status = 'proof_uploaded'").get().c,
     pendingReviews: db.prepare("SELECT COUNT(*) as c FROM reviews WHERE status = 'pending'").get().c,
-    totalRevenue: db.prepare('SELECT COALESCE(SUM(payment_amount), 0) as total FROM orders').get().total
+    totalRevenue: db.prepare("SELECT COALESCE(SUM(payment_amount), 0) as total FROM orders WHERE status IN ('confirmed')").get().total
   };
 
   const recentOrders = db.prepare(`
@@ -493,10 +494,17 @@ router.get('/orders/:id', requireAdmin, (req, res) => {
 // Update order status
 router.post('/orders/:id/status', requireAdmin, (req, res) => {
   const { status } = req.body;
+
+  // Validate allowed statuses
+  const allowed = ['pending', 'proof_uploaded', 'confirmed', 'cancelled'];
+  if (!allowed.includes(status)) {
+    return res.redirect('/admin/orders/' + req.params.id);
+  }
+
   db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, req.params.id);
 
-  // Update referral commissions when order is delivered
-  if (status === 'delivered') {
+  // Confirm referral commissions when order is confirmed
+  if (status === 'confirmed') {
     db.prepare("UPDATE referral_commissions SET status = 'confirmed' WHERE order_id = ?").run(req.params.id);
   }
   // If order is cancelled, cancel commissions and reverse affiliate balance

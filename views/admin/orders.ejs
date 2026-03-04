@@ -73,8 +73,8 @@
             font-size: 12px; font-weight: 700;
         }
         .badge-pending { background: #fff3e0; color: #e65100; }
-        .badge-paid { background: #e8f5e9; color: #2e7d32; }
-        .badge-delivered { background: #e3f2fd; color: #1565c0; }
+        .badge-proof_uploaded { background: #e3f2fd; color: #1565c0; }
+        .badge-confirmed { background: #e8f5e9; color: #2e7d32; }
         .badge-cancelled { background: #ffebee; color: #c62828; }
         .btn {
             display: inline-block; padding: 8px 16px; border: none; border-radius: 8px;
@@ -146,10 +146,10 @@
             <!-- Filter Tabs -->
             <div class="filter-tabs">
                 <a href="/admin/orders" class="filter-tab <%= (!currentStatus || currentStatus === 'all') ? 'active' : '' %>">الكل</a>
-                <a href="/admin/orders?status=pending" class="filter-tab <%= currentStatus === 'pending' ? 'active' : '' %>">معلق</a>
-                <a href="/admin/orders?status=paid" class="filter-tab <%= currentStatus === 'paid' ? 'active' : '' %>">مدفوع</a>
-                <a href="/admin/orders?status=delivered" class="filter-tab <%= currentStatus === 'delivered' ? 'active' : '' %>">تم التسليم</a>
-                <a href="/admin/orders?status=cancelled" class="filter-tab <%= currentStatus === 'cancelled' ? 'active' : '' %>">ملغي</a>
+                <a href="/admin/orders?status=pending"        class="filter-tab <%= currentStatus === 'pending'        ? 'active' : '' %>">في الانتظار</a>
+                <a href="/admin/orders?status=proof_uploaded" class="filter-tab <%= currentStatus === 'proof_uploaded' ? 'active' : '' %>">إيصال مرفوع</a>
+                <a href="/admin/orders?status=confirmed"      class="filter-tab <%= currentStatus === 'confirmed'      ? 'active' : '' %>">مؤكد</a>
+                <a href="/admin/orders?status=cancelled"      class="filter-tab <%= currentStatus === 'cancelled'      ? 'active' : '' %>">ملغي</a>
             </div>
 
             <div class="section">
@@ -179,7 +179,11 @@
                                     <td><%= order.payment_amount %> ر.س</td>
                                     <td>
                                         <span class="badge badge-<%= order.status %>">
-                                            <%= order.status === 'pending' ? 'معلق' : order.status === 'paid' ? 'مدفوع' : order.status === 'delivered' ? 'تم التسليم' : 'ملغي' %>
+                                            <% if (order.status === 'pending') { %>في الانتظار
+                                            <% } else if (order.status === 'proof_uploaded') { %>إيصال مرفوع
+                                            <% } else if (order.status === 'confirmed') { %>مؤكد
+                                            <% } else if (order.status === 'cancelled') { %>ملغي
+                                            <% } else { %><%= order.status %><% } %>
                                         </span>
                                     </td>
                                     <td><%= new Date(order.created_at).toLocaleDateString('ar-SA') %></td>
