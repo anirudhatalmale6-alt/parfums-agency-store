@@ -107,7 +107,7 @@
   %>
 
   <!-- Image Slider -->
-  <% if (typeof sliders !== 'undefined' && sliders && sliders.length > 0) { %>
+  <% if (typeof sliders !== 'undefined' && sliders && sliders.length > 0 && (typeof sliderEnabled === 'undefined' || sliderEnabled !== '0')) { %>
   <section class="home-slider" style="position: relative; overflow: hidden;">
     <div class="slider-container" id="sliderContainer" style="display: flex; transition: transform 0.5s ease; width: <%= sliders.length * 100 %>%;">
       <% sliders.forEach(function(slide) { %>
@@ -128,13 +128,17 @@
       <% }); %>
     </div>
     <% if (sliders.length > 1) { %>
+    <% if (typeof sliderShowArrows === 'undefined' || sliderShowArrows !== '0') { %>
     <button type="button" onclick="<%= (typeof dir !== 'undefined' && dir === 'ltr') ? 'slidePrev()' : 'slideNext()' %>" style="position: absolute; top: 50%; left: 12px; transform: translateY(-50%); background: var(--color-slider-arrow-bg, rgba(255,255,255,0.8)); color: var(--color-slider-arrow, #333); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;">‹</button>
     <button type="button" onclick="<%= (typeof dir !== 'undefined' && dir === 'ltr') ? 'slideNext()' : 'slidePrev()' %>" style="position: absolute; top: 50%; right: 12px; transform: translateY(-50%); background: var(--color-slider-arrow-bg, rgba(255,255,255,0.8)); color: var(--color-slider-arrow, #333); border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 18px; cursor: pointer; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: center;">›</button>
+    <% } %>
+    <% if (typeof sliderShowDots === 'undefined' || sliderShowDots !== '0') { %>
     <div style="position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px;">
       <% sliders.forEach(function(s, idx) { %>
         <div class="slider-dot<%= idx === 0 ? ' active' : '' %>" data-index="<%= idx %>" onclick="slideTo(<%= idx %>)" style="width: 10px; height: 10px; border-radius: 50%; background: <%= idx === 0 ? 'var(--color-primary)' : 'rgba(255,255,255,0.6)' %>; cursor: pointer; transition: var(--transition-fast);"></div>
       <% }); %>
     </div>
+    <% } %>
     <% } %>
   </section>
   <% } %>
@@ -976,8 +980,9 @@
     }
 
     // Auto-slide
-    if (totalSlides > 1) {
-      setInterval(function() { slideNext(); }, 5000);
+    var sliderInterval = <%= typeof sliderAutoplay !== 'undefined' ? (parseInt(sliderAutoplay) || 5) : 5 %> * 1000;
+    if (totalSlides > 1 && sliderInterval > 0) {
+      setInterval(function() { slideNext(); }, sliderInterval);
     }
   </script>
   <script src="/js/main.js"></script>

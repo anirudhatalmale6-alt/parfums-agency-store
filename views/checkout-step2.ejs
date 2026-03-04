@@ -2,10 +2,10 @@
 <html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
 <head>
   <%- include('partials/head') %>
-  <title>تأكيد الطلب — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+  <title><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Confirmation de commande' : 'تأكيد الطلب' %> — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
   <style>
     .step2-page {
-      padding: 100px 16px 40px;
+      padding: 24px 16px 40px;
       min-height: 100vh;
     }
     .step2-container {
@@ -316,31 +316,14 @@
 <body>
   <div class="pattern-overlay"></div>
 
-  <!-- Navbar -->
-  <nav class="navbar scrolled">
-    <div class="container">
-      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
-        <!-- Left: empty spacer -->
-        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
-        </div>
-        <!-- Center: Logo -->
-        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
-          <a href="/" style="display: flex; align-items: center; gap: 10px;">
-            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
-            <% } else { %>
-              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
-              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
-            <% } %>
-          </a>
-        </div>
-        <!-- Right: Home (always right) -->
-        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
-          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('home') %>">🏠</a>
-        </div>
-      </div>
-    </div>
-  </nav>
+  <!-- Minimal Checkout Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--color-bg,#fff);border-bottom:1px solid var(--color-border-light,#eee);">
+    <a href="/" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--color-bg-warm,#f5f5f5);color:var(--color-text,#000);text-decoration:none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <div style="flex:1;"></div>
+    <div style="width:40px;"></div>
+  </div>
 
   <!-- Step 2: Order Confirmation -->
   <div class="step2-page">
@@ -348,22 +331,19 @@
 
       <!-- Step Indicator: 1(done) → 2(active) → 3(pending) -->
       <div class="step-indicator">
-        <!-- Step 1: Done -->
         <div class="step-indicator__step">
           <div class="step-indicator__circle step-indicator__circle--done">✓</div>
-          <div class="step-indicator__label step-indicator__label--done">معلومات الطلب</div>
+          <div class="step-indicator__label step-indicator__label--done"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Informations' : 'معلومات الطلب' %></div>
         </div>
         <div class="step-indicator__line step-indicator__line--done"></div>
-        <!-- Step 2: Active -->
         <div class="step-indicator__step">
           <div class="step-indicator__circle step-indicator__circle--active">2</div>
-          <div class="step-indicator__label step-indicator__label--active">تأكيد الطلب</div>
+          <div class="step-indicator__label step-indicator__label--active"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Confirmation' : 'تأكيد الطلب' %></div>
         </div>
         <div class="step-indicator__line"></div>
-        <!-- Step 3: Pending -->
         <div class="step-indicator__step">
           <div class="step-indicator__circle">3</div>
-          <div class="step-indicator__label">الدفع</div>
+          <div class="step-indicator__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Paiement' : 'الدفع' %></div>
         </div>
       </div>
 
@@ -375,10 +355,10 @@
             <path d="M14 24.5L21 31.5L34 18.5" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </div>
-        <h1 class="step2-success__title">تم إنشاء طلبك بنجاح</h1>
+        <h1 class="step2-success__title"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Votre commande a été créée avec succès' : 'تم إنشاء طلبك بنجاح' %></h1>
         <div class="step2-success__ref">#<%= orderRef %></div>
         <br>
-        <span class="step2-success__badge">في الانتظار</span>
+        <span class="step2-success__badge"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'En attente' : 'في الانتظار' %></span>
       </div>
 
       <!-- Order Details Card -->
@@ -386,24 +366,24 @@
 
         <!-- Customer Info -->
         <div class="step2-card__section">
-          <div class="step2-card__section-title">معلومات العميل</div>
+          <div class="step2-card__section-title"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Informations client' : 'معلومات العميل' %></div>
           <div class="step2-card__row">
-            <span class="step2-card__label">الاسم</span>
+            <span class="step2-card__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Nom' : 'الاسم' %></span>
             <span class="step2-card__value step2-card__value--rtl"><%= order.full_name %></span>
           </div>
           <div class="step2-card__row">
-            <span class="step2-card__label">الهاتف</span>
+            <span class="step2-card__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Téléphone' : 'الهاتف' %></span>
             <span class="step2-card__value"><%= order.phone %></span>
           </div>
           <% if (order.city) { %>
           <div class="step2-card__row">
-            <span class="step2-card__label">المدينة</span>
+            <span class="step2-card__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Ville' : 'المدينة' %></span>
             <span class="step2-card__value step2-card__value--rtl"><%= order.city %></span>
           </div>
           <% } %>
           <% if (order.address) { %>
           <div class="step2-card__row">
-            <span class="step2-card__label">العنوان</span>
+            <span class="step2-card__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Adresse' : 'العنوان' %></span>
             <span class="step2-card__value step2-card__value--rtl"><%= order.address %></span>
           </div>
           <% } %>
@@ -411,7 +391,7 @@
 
         <!-- Product Info -->
         <div class="step2-card__section">
-          <div class="step2-card__section-title">المنتج</div>
+          <div class="step2-card__section-title"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Produit' : 'المنتج' %></div>
           <% if (typeof checkoutMode !== 'undefined' && checkoutMode === 'cart' && typeof cartItems !== 'undefined' && cartItems.length > 0) { %>
             <% cartItems.forEach(function(item) { %>
             <div class="step2-product" style="margin-bottom: 10px;">
@@ -447,7 +427,7 @@
         <!-- Shipping Info -->
         <% if (typeof shippingCompany !== 'undefined' && shippingCompany) { %>
         <div class="step2-card__section">
-          <div class="step2-card__section-title">التوصيل</div>
+          <div class="step2-card__section-title"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Livraison' : 'التوصيل' %></div>
           <div class="step2-shipping">
             <% if (shippingCompany.logo_filename) { %>
               <img class="step2-shipping__logo" src="/uploads/shipping/<%= shippingCompany.logo_filename %>" alt="<%= shippingCompany.name %>">
@@ -466,7 +446,7 @@
 
         <!-- Payment Summary -->
         <div class="step2-card__section">
-          <div class="step2-card__section-title">ملخص الدفع</div>
+          <div class="step2-card__section-title"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Résumé du paiement' : 'ملخص الدفع' %></div>
           <%
             var paymentMode = (typeof shippingCompany !== 'undefined' && shippingCompany) ? shippingCompany.payment_mode : 'full';
             var paymentAmount = order.payment_amount || order.total_price;
@@ -475,20 +455,20 @@
           %>
           <div class="step2-payment-info">
             <% if (paymentMode === 'advance') { %>
-              عربون: <strong><%= paymentAmount %> <%= t('currency') %></strong>
+              <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Acompte' : 'عربون' %>: <strong><%= paymentAmount %> <%= t('currency') %></strong>
               <br>
-              المتبقي عند الاستلام: <strong><%= remainingAmount %> <%= t('currency') %></strong>
+              <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Reste à la livraison' : 'المتبقي عند الاستلام' %>: <strong><%= remainingAmount %> <%= t('currency') %></strong>
             <% } else { %>
-              المبلغ الكامل: <strong><%= totalPrice %> <%= t('currency') %></strong>
+              <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Montant total' : 'المبلغ الكامل' %>: <strong><%= totalPrice %> <%= t('currency') %></strong>
               <% if (typeof shippingCompany !== 'undefined' && shippingCompany && shippingCompany.delivery_fee == 0) { %>
-                &mdash; توصيل مجاني
+                &mdash; <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Livraison gratuite' : 'توصيل مجاني' %>
               <% } %>
             <% } %>
           </div>
 
           <!-- Total row -->
           <div class="step2-card__row" style="margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--color-border-light, #f0f0f0);">
-            <span class="step2-card__label" style="font-size: 15px; font-weight: 700; color: var(--color-text, #000);">المبلغ الإجمالي</span>
+            <span class="step2-card__label" style="font-size: 15px; font-weight: 700; color: var(--color-text, #000);"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Total' : 'المبلغ الإجمالي' %></span>
             <span class="step2-card__value" style="font-size: 18px; font-weight: 800; color: var(--color-primary, #000);"><%= totalPrice %> <%= t('currency') %></span>
           </div>
         </div>
@@ -497,14 +477,13 @@
 
       <!-- CTA: Pay via Bank Transfer -->
       <a href="/checkout/step3/<%= orderRef %>" class="step2-cta" data-turbo="false">
-        💳 الدفع عبر التحويل البنكي
+        💳 <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Payer par virement bancaire' : 'الدفع عبر التحويل البنكي' %>
       </a>
-      <p class="step2-helper">يرجى إتمام الدفع لتأكيد طلبك</p>
+      <p class="step2-helper"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Veuillez effectuer le paiement pour confirmer votre commande' : 'يرجى إتمام الدفع لتأكيد طلبك' %></p>
 
     </div>
   </div>
 
-  <%- include('partials/footer') %>
   <script src="/js/main.js"></script>
 </body>
 </html>

@@ -386,6 +386,40 @@
                             </div>
                             <small style="color: #888; font-size: 11px;">يمكنك استخدام rgba للشفافية مثل: rgba(255,255,255,0.8)</small>
                         </div>
+                        <!-- Slider Controls -->
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 2px solid #e8e0d8;">
+                            <label style="font-weight: 700; font-size: 15px; color: #6B5335; margin-bottom: 12px; display: block;">اعدادات السلايدر</label>
+                            <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                                <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+                                    <label>اظهار السلايدر</label>
+                                    <select name="slider_enabled" style="width: 100%; padding: 8px 12px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 14px;">
+                                        <option value="1" <%= (settings.slider_enabled || '1') === '1' ? 'selected' : '' %>>نعم</option>
+                                        <option value="0" <%= settings.slider_enabled === '0' ? 'selected' : '' %>>لا</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+                                    <label>اظهار الأسهم</label>
+                                    <select name="slider_show_arrows" style="width: 100%; padding: 8px 12px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 14px;">
+                                        <option value="1" <%= (settings.slider_show_arrows || '1') === '1' ? 'selected' : '' %>>نعم</option>
+                                        <option value="0" <%= settings.slider_show_arrows === '0' ? 'selected' : '' %>>لا</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+                                    <label>اظهار النقاط</label>
+                                    <select name="slider_show_dots" style="width: 100%; padding: 8px 12px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 14px;">
+                                        <option value="1" <%= (settings.slider_show_dots || '1') === '1' ? 'selected' : '' %>>نعم</option>
+                                        <option value="0" <%= settings.slider_show_dots === '0' ? 'selected' : '' %>>لا</option>
+                                    </select>
+                                </div>
+                                <div class="form-group" style="flex: 1; min-width: 140px; margin-bottom: 0;">
+                                    <label>سرعة التشغيل التلقائي (ثواني)</label>
+                                    <input type="number" name="slider_autoplay" value="<%= settings.slider_autoplay || '5' %>" min="2" max="15" style="width: 100%; padding: 8px 12px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 14px; text-align: center;">
+                                </div>
+                            </div>
+                            <div style="margin-top: 12px;">
+                                <a href="/admin/sliders" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: #6B5335; color: white; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;">🖼️ ادارة صور السلايدر</a>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Live Preview -->

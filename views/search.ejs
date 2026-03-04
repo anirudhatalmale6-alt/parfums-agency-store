@@ -79,6 +79,13 @@
     .skeleton-line.short { width: 60%; }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
+    /* Pagination */
+    .search-pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 24px 0 16px; flex-wrap: wrap; }
+    .search-pagination button { min-width: 38px; height: 38px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; background: var(--color-card, #fff); color: var(--color-text); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-body); }
+    .search-pagination button:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .search-pagination button.active { background: var(--color-primary, #000); color: var(--color-button-text, #fff); border-color: var(--color-primary, #000); }
+    .search-pagination button:disabled { opacity: 0.4; cursor: default; }
+
     /* Mobile drawer */
     .filter-drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; }
     .filter-drawer { position: fixed; top: 0; <%= (typeof dir !== 'undefined' && dir === 'ltr') ? 'right' : 'left' %>: -320px; width: 300px; max-width: 85vw; height: 100%; background: var(--color-card, #fff); z-index: 1001; transition: all 0.3s ease; box-shadow: 0 0 16px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow-y: auto; }
@@ -142,9 +149,9 @@
         </div>
       </div>
 
-      <!-- Top bar: results count + filter button -->
+      <!-- Top bar: filter button -->
       <div class="search-topbar">
-        <span class="results-count" id="resultsCount"></span>
+        <div></div>
         <button class="filter-toggle-btn" onclick="openFilterDrawer()">
           <span>⚙</span> <%= t('filter') %>
         </button>
@@ -209,6 +216,7 @@
             <div class="no-results-icon">🔍</div>
             <div class="no-results-text"><%= t('no_results') %></div>
           </div>
+          <div class="search-pagination" id="pagination"></div>
         </main>
       </div>
     </div>
@@ -265,6 +273,8 @@
   var _searchTimer = null;
   var _drawerSide = '<%= (typeof dir !== "undefined" && dir === "ltr") ? "right" : "left" %>';
   var _currency = '<%= t("currency") %>';
+  var _currentPage = 1;
+  var _totalPages = 1;
 
   // Init
   document.addEventListener('DOMContentLoaded', function() {
@@ -284,6 +294,7 @@
     var val = this.value.trim();
     document.getElementById('searchClear').style.display = val ? 'block' : 'none';
     clearTimeout(_searchTimer);
+    _currentPage = 1;
     _searchTimer = setTimeout(fetchProducts, 300);
   });
   searchInput.addEventListener('keydown', function(e) {
@@ -294,12 +305,14 @@
     searchInput.value = '';
     document.getElementById('searchClear').style.display = 'none';
     searchInput.focus();
+    _currentPage = 1;
     fetchProducts();
   }
 
   // Sort
   function setSort(sort) {
     _currentSort = sort;
+    _currentPage = 1;
     // Update radio UI in both desktop and drawer
     document.querySelectorAll('.filter-radio[data-sort]').forEach(function(el) {
       el.classList.toggle('active', el.dataset.sort === sort);
@@ -312,6 +325,7 @@
     var idx = _selectedCategories.indexOf(catId);
     if (idx >= 0) _selectedCategories.splice(idx, 1);
     else _selectedCategories.push(catId);
+    _currentPage = 1;
     // Update checkbox UI
     document.querySelectorAll('.filter-checkbox[data-cat="' + catId + '"]').forEach(function(el) {
       el.classList.toggle('active', _selectedCategories.indexOf(catId) >= 0);
@@ -337,9 +351,10 @@
   }
 
   // Fetch products from API
-  function fetchProducts() {
+  function fetchProducts(page) {
+    if (typeof page === 'number') _currentPage = page;
     var q = searchInput.value.trim();
-    var url = '/api/search?sort=' + _currentSort;
+    var url = '/api/search?sort=' + _currentSort + '&page=' + _currentPage + '&limit=30';
     if (q) url += '&q=' + encodeURIComponent(q);
     if (_selectedCategories.length > 0) url += '&categories=' + _selectedCategories.join(',');
 
@@ -348,7 +363,8 @@
       .then(function(data) {
         renderProducts(data.products, data.currency || _currency);
         renderCategories(data.categories);
-        document.getElementById('resultsCount').textContent = data.total + ' ' + '<%= t("products_found") %>';
+        _totalPages = data.totalPages || 1;
+        renderPagination();
       })
       .catch(function(err) {
         console.error('Search error:', err);
@@ -411,6 +427,31 @@
     });
     document.getElementById('desktopCategories').innerHTML = html;
     document.getElementById('drawerCategories').innerHTML = html;
+  }
+
+  // Pagination
+  function renderPagination() {
+    var el = document.getElementById('pagination');
+    if (_totalPages <= 1) { el.innerHTML = ''; return; }
+    var html = '';
+    // Prev button
+    html += '<button ' + (_currentPage <= 1 ? 'disabled' : 'onclick="goToPage(' + (_currentPage - 1) + ')"') + '>&lsaquo;</button>';
+    // Page numbers
+    var start = Math.max(1, _currentPage - 2);
+    var end = Math.min(_totalPages, _currentPage + 2);
+    if (start > 1) { html += '<button onclick="goToPage(1)">1</button>'; if (start > 2) html += '<button disabled>...</button>'; }
+    for (var i = start; i <= end; i++) {
+      html += '<button class="' + (i === _currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+    }
+    if (end < _totalPages) { if (end < _totalPages - 1) html += '<button disabled>...</button>'; html += '<button onclick="goToPage(' + _totalPages + ')">' + _totalPages + '</button>'; }
+    // Next button
+    html += '<button ' + (_currentPage >= _totalPages ? 'disabled' : 'onclick="goToPage(' + (_currentPage + 1) + ')"') + '>&rsaquo;</button>';
+    el.innerHTML = html;
+  }
+
+  function goToPage(page) {
+    fetchProducts(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // Escape HTML

@@ -7,54 +7,29 @@
 <body>
   <div class="pattern-overlay"></div>
 
-  <!-- Navbar -->
-  <nav class="navbar scrolled">
-    <div class="container">
-      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
-        <!-- Left: empty spacer -->
-        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
-        </div>
-        <!-- Center: Logo -->
-        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
-          <a href="/" style="display: flex; align-items: center; gap: 10px;">
-            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
-            <% } else { %>
-              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
-              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
-            <% } %>
-          </a>
-        </div>
-        <!-- Right: Home (always right) -->
-        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
-          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('home') %>">🏠</a>
-        </div>
+  <!-- Minimal Checkout Header: Home icon only -->
+  <div class="checkout-mini-header">
+    <a href="/" class="checkout-mini-header__home" title="<%= t('home') %>">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <!-- Step Indicator -->
+    <div class="cs1-steps">
+      <div class="checkout-header__step checkout-header__step--active">
+        <span class="checkout-header__step-num cs1-step-num cs1-step-num--active">1</span>
+        <span class="cs1-step-label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Informations' : 'معلومات الطلب' %></span>
+      </div>
+      <span class="checkout-header__step-arrow">—</span>
+      <div class="checkout-header__step">
+        <span class="checkout-header__step-num cs1-step-num">2</span>
+        <span class="cs1-step-label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Confirmation' : 'تأكيد الطلب' %></span>
+      </div>
+      <span class="checkout-header__step-arrow">—</span>
+      <div class="checkout-header__step">
+        <span class="checkout-header__step-num cs1-step-num">3</span>
+        <span class="cs1-step-label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Paiement' : 'الدفع' %></span>
       </div>
     </div>
-  </nav>
-
-  <!-- Step Indicator -->
-  <div class="checkout-header">
-    <div class="container">
-      <div class="checkout-header__inner">
-        <div class="checkout-header__steps cs1-steps">
-          <div class="checkout-header__step checkout-header__step--active">
-            <span class="checkout-header__step-num cs1-step-num cs1-step-num--active">1</span>
-            <span class="cs1-step-label">معلومات الطلب</span>
-          </div>
-          <span class="checkout-header__step-arrow">›</span>
-          <div class="checkout-header__step">
-            <span class="checkout-header__step-num cs1-step-num">2</span>
-            <span class="cs1-step-label">تأكيد الطلب</span>
-          </div>
-          <span class="checkout-header__step-arrow">›</span>
-          <div class="checkout-header__step">
-            <span class="checkout-header__step-num cs1-step-num">3</span>
-            <span class="cs1-step-label">الدفع</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div style="width: 22px;"></div>
   </div>
 
   <!-- Checkout Step 1 Page -->
@@ -101,7 +76,7 @@
             <div class="form-section">
               <h2 class="form-section__title">
                 <span class="form-section__title-icon">🛍️</span>
-                المنتج
+                <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Produit' : 'المنتج' %>
               </h2>
 
               <div class="cs1-product-card">
@@ -299,10 +274,12 @@
             <% } %>
             <input type="hidden" name="checkout_mode" value="<%= typeof checkoutMode !== 'undefined' ? checkoutMode : 'single' %>">
 
-            <!-- Submit Button -->
-            <button type="submit" class="btn btn--primary btn--lg btn--full" id="submitBtn" style="margin-top: 8px;">
-              متابعة الطلب ←
-            </button>
+            <!-- Submit Button (sticky) -->
+            <div class="cs1-sticky-btn">
+              <button type="submit" class="btn btn--primary btn--lg btn--full" id="submitBtn">
+                <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Continuer la commande →' : '← متابعة الطلب' %>
+              </button>
+            </div>
 
           </div>
 
@@ -387,10 +364,56 @@
     </div>
   </div>
 
-  <%- include('partials/footer') %>
-
   <!-- Page-specific styles -->
   <style>
+    /* Mini checkout header */
+    .checkout-mini-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--color-bg, #fff);
+      border-bottom: 1px solid var(--color-border-light, #eee);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .checkout-mini-header__home {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--color-bg-warm, #f5f5f5);
+      color: var(--color-text, #000);
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .checkout-mini-header__home:hover {
+      background: var(--color-border-light, #e0e0e0);
+    }
+
+    /* Sticky submit button */
+    .cs1-sticky-btn {
+      position: sticky;
+      bottom: 0;
+      background: var(--color-bg, #fff);
+      padding: 12px 0 16px;
+      z-index: 50;
+      margin-top: 8px;
+    }
+    .cs1-sticky-btn::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      left: 0;
+      right: 0;
+      height: 20px;
+      background: linear-gradient(to top, var(--color-bg, #fff), transparent);
+      pointer-events: none;
+    }
+
     /* Step indicator enhancements */
     .cs1-steps {
       display: flex;

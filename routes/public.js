@@ -281,7 +281,17 @@ router.get('/', (req, res) => {
     }
   } catch (e) {}
 
-  res.render('home', { products, sliders, categories, banners, bannerInterval, latestReviews, homeReviewCount, showFeedbackSection, feedbackCollectionId, collections, useCollections, categoryGroups });
+  // Slider settings
+  let sliderEnabled = '1', sliderShowArrows = '1', sliderShowDots = '1', sliderAutoplay = '5';
+  try {
+    const _ss = (k, d) => { const r = db.prepare("SELECT setting_value FROM admin_settings WHERE setting_key = ?").get(k); return r ? r.setting_value : d; };
+    sliderEnabled = _ss('slider_enabled', '1');
+    sliderShowArrows = _ss('slider_show_arrows', '1');
+    sliderShowDots = _ss('slider_show_dots', '1');
+    sliderAutoplay = _ss('slider_autoplay', '5');
+  } catch (e) {}
+
+  res.render('home', { products, sliders, categories, banners, bannerInterval, latestReviews, homeReviewCount, showFeedbackSection, feedbackCollectionId, collections, useCollections, categoryGroups, sliderEnabled, sliderShowArrows, sliderShowDots, sliderAutoplay });
 });
 
 
@@ -1426,7 +1436,14 @@ router.get('/api/search', (req, res) => {
     if (sort === 'price_asc') orderBy = 'ORDER BY price ASC';
     else if (sort === 'price_desc') orderBy = 'ORDER BY price DESC';
 
-    const products = db.prepare('SELECT * FROM products ' + where + ' ' + orderBy).all(...params);
+    // Pagination
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 30));
+    const offset = (page - 1) * limit;
+
+    const totalRow = db.prepare('SELECT COUNT(*) as cnt FROM products ' + where).get(...params);
+    const total = totalRow ? totalRow.cnt : 0;
+    const products = db.prepare('SELECT * FROM products ' + where + ' ' + orderBy + ' LIMIT ? OFFSET ?').all(...params, limit, offset);
 
     // Get categories with product count
     let categories = [];
@@ -1442,8 +1459,9 @@ router.get('/api/search', (req, res) => {
     } catch(e) {}
 
     const currency = (typeof res.locals.t === 'function') ? res.locals.t('currency') : 'د.م';
+    const totalPages = Math.ceil(total / limit);
 
-    res.json({ products, categories, total: products.length, currency });
+    res.json({ products, categories, total, currency, page, totalPages });
   } catch (err) {
     console.error('Search API error:', err);
     res.status(500).json({ error: 'Server error' });

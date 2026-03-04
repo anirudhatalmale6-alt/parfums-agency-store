@@ -1072,6 +1072,10 @@ router.post('/settings/theme', requireAdmin, (req, res) => {
     ['border_color', req.body.border_color || '#000000'],
     ['slider_arrow_color', req.body.slider_arrow_color || '#333333'],
     ['slider_arrow_bg_color', req.body.slider_arrow_bg_color_text || req.body.slider_arrow_bg_color || 'rgba(255,255,255,0.9)'],
+    ['slider_enabled', req.body.slider_enabled || '1'],
+    ['slider_show_arrows', req.body.slider_show_arrows || '1'],
+    ['slider_show_dots', req.body.slider_show_dots || '1'],
+    ['slider_autoplay', req.body.slider_autoplay || '5'],
   ];
   colorKeys.forEach(([key, value]) => {
     const existing = db.prepare("SELECT 1 FROM admin_settings WHERE setting_key = ?").get(key);

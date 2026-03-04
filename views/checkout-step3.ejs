@@ -2,36 +2,19 @@
 <html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
 <head>
   <%- include('partials/head') %>
-  <title>الدفع — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+  <title><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Paiement' : 'الدفع' %> — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
 </head>
 <body>
   <div class="pattern-overlay"></div>
 
-  <!-- Navbar -->
-  <nav class="navbar scrolled">
-    <div class="container">
-      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
-        <!-- Left: empty spacer -->
-        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
-        </div>
-        <!-- Center: Logo -->
-        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
-          <a href="/" style="display: flex; align-items: center; gap: 10px;">
-            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
-            <% } else { %>
-              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
-              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
-            <% } %>
-          </a>
-        </div>
-        <!-- Right: Home (always right) -->
-        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
-          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="الرئيسية">🏠</a>
-        </div>
-      </div>
-    </div>
-  </nav>
+  <!-- Minimal Checkout Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--color-bg,#fff);border-bottom:1px solid var(--color-border-light,#eee);position:sticky;top:0;z-index:100;">
+    <a href="/" style="display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;background:var(--color-bg-warm,#f5f5f5);color:var(--color-text,#000);text-decoration:none;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </a>
+    <div style="flex:1;"></div>
+    <div style="width:40px;"></div>
+  </div>
 
   <!-- Step 3: Bank Payment Page -->
   <div class="checkout-page">
@@ -41,17 +24,17 @@
       <div class="step-indicator">
         <div class="step-indicator__step step-indicator__step--done">
           <div class="step-indicator__circle step-indicator__circle--done">✓</div>
-          <div class="step-indicator__label">معلومات الطلب</div>
+          <div class="step-indicator__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Informations' : 'معلومات الطلب' %></div>
         </div>
         <div class="step-indicator__line step-indicator__line--done"></div>
         <div class="step-indicator__step step-indicator__step--done">
           <div class="step-indicator__circle step-indicator__circle--done">✓</div>
-          <div class="step-indicator__label">تأكيد الطلب</div>
+          <div class="step-indicator__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Confirmation' : 'تأكيد الطلب' %></div>
         </div>
         <div class="step-indicator__line step-indicator__line--done"></div>
         <div class="step-indicator__step step-indicator__step--active">
           <div class="step-indicator__circle step-indicator__circle--active">3</div>
-          <div class="step-indicator__label">الدفع</div>
+          <div class="step-indicator__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Paiement' : 'الدفع' %></div>
         </div>
       </div>
 
@@ -60,11 +43,11 @@
 
         <!-- 1. Amount to Pay Card -->
         <div class="step3-amount-card">
-          <div class="step3-amount-card__label">المبلغ المطلوب تحويله</div>
-          <div class="step3-amount-card__value"><%= order.payment_amount %> د.م</div>
+          <div class="step3-amount-card__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Montant à transférer' : 'المبلغ المطلوب تحويله' %></div>
+          <div class="step3-amount-card__value"><%= order.payment_amount %> <%= t('currency') %></div>
           <% if (order.payment_type === 'bank_deposit' && order.remaining_amount > 0) { %>
             <div class="step3-amount-card__remaining">
-              المتبقي عند الاستلام: <strong><%= order.remaining_amount %> د.م</strong>
+              <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Reste à la livraison' : 'المتبقي عند الاستلام' %>: <strong><%= order.remaining_amount %> <%= t('currency') %></strong>
             </div>
           <% } %>
           <div class="step3-amount-card__ref">
@@ -76,7 +59,7 @@
         <div class="form-section">
           <h2 class="form-section__title">
             <span class="form-section__title-icon">🏦</span>
-            معلومات الحساب البنكي
+            <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Informations bancaires' : 'معلومات الحساب البنكي' %>
           </h2>
 
           <div class="bank-details">
@@ -86,41 +69,41 @@
                   <div style="border-top: 2px solid var(--color-border-light); margin: 16px 0;"></div>
                 <% } %>
                 <div class="bank-detail">
-                  <span class="bank-detail__label">اسم البنك</span>
+                  <span class="bank-detail__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Nom de la banque' : 'اسم البنك' %></span>
                   <span class="bank-detail__value"><%= bank.bank_name %></span>
                 </div>
                 <div class="bank-detail">
-                  <span class="bank-detail__label">صاحب الحساب</span>
+                  <span class="bank-detail__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Titulaire du compte' : 'صاحب الحساب' %></span>
                   <span class="bank-detail__value">
                     <%= bank.account_holder %>
-                    <button type="button" class="bank-detail__copy" data-value="<%= bank.account_holder %>" title="نسخ">📋</button>
+                    <button type="button" class="bank-detail__copy" data-value="<%= bank.account_holder %>" title="<%= typeof lang !== 'undefined' && lang === 'fr' ? 'Copier' : 'نسخ' %>">📋</button>
                   </span>
                 </div>
                 <div class="bank-detail">
-                  <span class="bank-detail__label">رقم الحساب (RIB)</span>
+                  <span class="bank-detail__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Numéro de compte (RIB)' : 'رقم الحساب (RIB)' %></span>
                   <span class="bank-detail__value">
                     <%= bank.rib %>
-                    <button type="button" class="bank-detail__copy" data-value="<%= bank.rib.replace(/\s/g, '') %>" title="نسخ">📋</button>
+                    <button type="button" class="bank-detail__copy" data-value="<%= bank.rib.replace(/\s/g, '') %>" title="<%= typeof lang !== 'undefined' && lang === 'fr' ? 'Copier' : 'نسخ' %>">📋</button>
                   </span>
                 </div>
               <% }); %>
             <% } else { %>
               <div class="bank-detail">
-                <span class="bank-detail__label">اسم البنك</span>
+                <span class="bank-detail__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Nom de la banque' : 'اسم البنك' %></span>
                 <span class="bank-detail__value">CIH Bank</span>
               </div>
               <div class="bank-detail">
-                <span class="bank-detail__label">صاحب الحساب</span>
+                <span class="bank-detail__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Titulaire du compte' : 'صاحب الحساب' %></span>
                 <span class="bank-detail__value">
                   متجرنا SARL
-                  <button type="button" class="bank-detail__copy" data-value="متجرنا SARL" title="نسخ">📋</button>
+                  <button type="button" class="bank-detail__copy" data-value="متجرنا SARL" title="<%= typeof lang !== 'undefined' && lang === 'fr' ? 'Copier' : 'نسخ' %>">📋</button>
                 </span>
               </div>
               <div class="bank-detail">
-                <span class="bank-detail__label">رقم الحساب (RIB)</span>
+                <span class="bank-detail__label"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Numéro de compte (RIB)' : 'رقم الحساب (RIB)' %></span>
                 <span class="bank-detail__value">
                   230 780 0118274000 68 30
-                  <button type="button" class="bank-detail__copy" data-value="230780011827400006830" title="نسخ">📋</button>
+                  <button type="button" class="bank-detail__copy" data-value="230780011827400006830" title="<%= typeof lang !== 'undefined' && lang === 'fr' ? 'Copier' : 'نسخ' %>">📋</button>
                 </span>
               </div>
             <% } %>
@@ -131,28 +114,28 @@
         <div class="form-section">
           <h2 class="form-section__title">
             <span class="form-section__title-icon">📤</span>
-            رفع إيصال الدفع
+            <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Télécharger le reçu de paiement' : 'رفع إيصال الدفع' %>
           </h2>
 
           <div class="form-group">
             <div class="upload-zone" id="uploadZone">
               <div class="upload-zone__icon">📤</div>
-              <div class="upload-zone__text">اضغط لرفع صورة إيصال الدفع</div>
+              <div class="upload-zone__text"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Cliquez pour télécharger le reçu' : 'اضغط لرفع صورة إيصال الدفع' %></div>
               <div class="upload-zone__hint">JPG, PNG, PDF — Max 10MB</div>
               <input type="file" id="receiptUpload" name="receipt" accept="image/*,.pdf">
             </div>
             <div class="upload-preview" id="uploadPreview">
-              <img class="upload-preview__img" id="uploadPreviewImg" src="" alt="معاينة الإيصال" style="display:none;">
+              <img class="upload-preview__img" id="uploadPreviewImg" src="" alt="<%= typeof lang !== 'undefined' && lang === 'fr' ? 'Aperçu du reçu' : 'معاينة الإيصال' %>" style="display:none;">
               <div class="upload-preview__name" id="uploadPreviewName"></div>
               <button type="button" class="upload-preview__remove" id="uploadPreviewRemove">✕</button>
             </div>
-            <div class="form-error" id="receiptError">يرجى رفع صورة إيصال الدفع</div>
+            <div class="form-error" id="receiptError"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Veuillez télécharger le reçu de paiement' : 'يرجى رفع صورة إيصال الدفع' %></div>
           </div>
         </div>
 
         <!-- 4. Submit Button -->
         <button type="button" class="btn btn--primary btn--lg btn--full" id="submitPaymentBtn">
-          ✅ تأكيد الدفع
+          ✅ <%= typeof lang !== 'undefined' && lang === 'fr' ? 'Confirmer le paiement' : 'تأكيد الدفع' %>
         </button>
 
       </div><!-- /.step3-content -->
@@ -163,10 +146,8 @@
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="loading-spinner"></div>
-    <div class="loading-text">جاري إرسال إيصال الدفع...</div>
+    <div class="loading-text"><%= typeof lang !== 'undefined' && lang === 'fr' ? 'Envoi du reçu en cours...' : 'جاري إرسال إيصال الدفع...' %></div>
   </div>
-
-  <%- include('partials/footer') %>
 
   <style>
     /* Step Indicator */
@@ -334,6 +315,8 @@
   <script>
   (function() {
     'use strict';
+    var _lang = '<%= typeof lang !== "undefined" ? lang : "ar" %>';
+    var _t = function(ar, fr) { return _lang === 'fr' ? fr : ar; };
 
     document.addEventListener('DOMContentLoaded', function() {
 
@@ -399,12 +382,12 @@
 
           var validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
           if (validTypes.indexOf(file.type) === -1) {
-            showToast('يرجى اختيار صورة أو ملف PDF', 'error');
+            showToast(_t('يرجى اختيار صورة أو ملف PDF', 'Veuillez choisir une image ou un fichier PDF'), 'error');
             uploadInput.value = '';
             return;
           }
           if (file.size > 10 * 1024 * 1024) {
-            showToast('حجم الملف كبير جداً (الحد الأقصى 10 ميغابايت)', 'error');
+            showToast(_t('حجم الملف كبير جداً (الحد الأقصى 10 ميغابايت)', 'Fichier trop volumineux (max 10 Mo)'), 'error');
             uploadInput.value = '';
             return;
           }
@@ -435,7 +418,7 @@
           if (uploadZone) {
             var zoneText = uploadZone.querySelector('.upload-zone__text');
             var zoneIcon = uploadZone.querySelector('.upload-zone__icon');
-            if (zoneText) zoneText.textContent = 'تم اختيار الملف';
+            if (zoneText) zoneText.textContent = _t('تم اختيار الملف', 'Fichier sélectionné');
             if (zoneIcon) zoneIcon.textContent = '✅';
           }
         });
@@ -454,7 +437,7 @@
             uploadZone.classList.remove('upload-zone--has-file');
             var zoneText = uploadZone.querySelector('.upload-zone__text');
             var zoneIcon = uploadZone.querySelector('.upload-zone__icon');
-            if (zoneText) zoneText.textContent = 'اضغط لرفع صورة إيصال الدفع';
+            if (zoneText) zoneText.textContent = _t('اضغط لرفع صورة إيصال الدفع', 'Cliquez pour télécharger le reçu');
             if (zoneIcon) zoneIcon.textContent = '📤';
           }
         });
@@ -473,14 +456,14 @@
           var receiptFile = uploadInput && uploadInput.files && uploadInput.files[0];
           if (!receiptFile) {
             if (uploadZone) uploadZone.classList.add('upload-zone--error');
-            if (receiptError) { receiptError.textContent = '⚠️ يرجى رفع صورة إيصال الدفع'; receiptError.classList.add('visible'); }
-            if (typeof showToast === 'function') showToast('يرجى رفع إيصال الدفع', 'error');
+            if (receiptError) { receiptError.textContent = '⚠️ ' + _t('يرجى رفع صورة إيصال الدفع', 'Veuillez télécharger le reçu de paiement'); receiptError.classList.add('visible'); }
+            if (typeof showToast === 'function') showToast(_t('يرجى رفع إيصال الدفع', 'Veuillez télécharger le reçu'), 'error');
             return;
           }
 
           isSubmitting = true;
           submitBtn.disabled = true;
-          submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg style="animation:spin 1s linear infinite;width:20px;height:20px;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4 31.4" stroke-dashoffset="10"/></svg> جاري الإرسال...</span>';
+          submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg style="animation:spin 1s linear infinite;width:20px;height:20px;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4 31.4" stroke-dashoffset="10"/></svg> ' + _t('جاري الإرسال...', 'Envoi en cours...') + '</span>';
 
           if (loadingOverlay) loadingOverlay.classList.add('visible');
 
@@ -501,7 +484,7 @@
               hideLoading();
               resetSubmitBtn();
               if (typeof showToast === 'function') {
-                showToast(data.error || 'حدث خطأ، يرجى المحاولة مرة أخرى', 'error');
+                showToast(data.error || _t('حدث خطأ، يرجى المحاولة مرة أخرى', 'Une erreur est survenue, veuillez réessayer'), 'error');
               }
             }
           })
@@ -510,7 +493,7 @@
             resetSubmitBtn();
             console.error('Payment upload error:', err);
             if (typeof showToast === 'function') {
-              showToast('خطأ في الاتصال، يرجى المحاولة مرة أخرى', 'error');
+              showToast(_t('خطأ في الاتصال، يرجى المحاولة مرة أخرى', 'Erreur de connexion, veuillez réessayer'), 'error');
             }
           });
         });
@@ -520,7 +503,7 @@
         isSubmitting = false;
         if (submitBtn) {
           submitBtn.disabled = false;
-          submitBtn.innerHTML = '✅ تأكيد الدفع';
+          submitBtn.innerHTML = '✅ ' + _t('تأكيد الدفع', 'Confirmer le paiement');
         }
       }
 
