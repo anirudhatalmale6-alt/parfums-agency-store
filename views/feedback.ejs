@@ -145,7 +145,7 @@
         <div class="section-header__divider"></div>
       </div>
       <div class="feedback-card animate-on-scroll">
-        <form id="feedbackForm" class="feedback-form" action="/feedback" method="POST" enctype="multipart/form-data">
+        <form id="feedbackForm" class="feedback-form" action="/feedback" method="POST" enctype="multipart/form-data" data-turbo="false" data-feedback-page="true">
           <div class="feedback-form__row">
             <div class="form-group">
               <input type="text" id="feedbackName" name="name" class="form-input" placeholder="<%= t('your_name') %> *" required>
@@ -235,7 +235,7 @@
               <div>
                 <div class="rv-card__name-row">
                   <span class="rv-card__name"><%= review.name || t('customer') %></span>
-                  <span class="rv-card__verified"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#1DA1F2"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                  <span class="rv-card__verified"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#000000"/><path d="M9 12l2 2 4-4" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
                 </div>
                 <% if (review.product_title) { %>
                   <div class="rv-card__product"><%= review.product_title %></div>

@@ -583,6 +583,11 @@ function initFeedbackForm() {
   const form = document.getElementById('feedbackForm');
   if (!form) return;
 
+  // Skip on standalone feedback page — it has its own submit handler
+  if (window.location.pathname === '/feedback') return;
+  if (form.dataset.feedbackPage === 'true') return;
+  if (form.action && form.action.indexOf('/feedback') !== -1 && form.action.indexOf('/product/') === -1) return;
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     clearErrors();
