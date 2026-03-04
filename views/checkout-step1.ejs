@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <title><%= t('checkout') %> — <%= typeof product !== 'undefined' && product ? product.title : (typeof siteName !== 'undefined' ? siteName : 'متجرنا') %></title>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: empty spacer -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <!-- Right: Home (always right) -->
+        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
+          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('home') %>">🏠</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Step Indicator -->
+  <div class="checkout-header">
+    <div class="container">
+      <div class="checkout-header__inner">
+        <div class="checkout-header__steps cs1-steps">
+          <div class="checkout-header__step checkout-header__step--active">
+            <span class="checkout-header__step-num cs1-step-num cs1-step-num--active">1</span>
+            <span class="cs1-step-label">معلومات الطلب</span>
+          </div>
+          <span class="checkout-header__step-arrow">›</span>
+          <div class="checkout-header__step">
+            <span class="checkout-header__step-num cs1-step-num">2</span>
+            <span class="cs1-step-label">تأكيد الطلب</span>
+          </div>
+          <span class="checkout-header__step-arrow">›</span>
+          <div class="checkout-header__step">
+            <span class="checkout-header__step-num cs1-step-num">3</span>
+            <span class="cs1-step-label">الدفع</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Checkout Step 1 Page -->
+  <div class="checkout-page">
+    <div class="container">
+
+      <form id="checkoutStep1Form" method="POST" action="" data-turbo="false" novalidate>
+        <div class="checkout__grid">
+
+          <!-- Form Side -->
+          <div class="checkout-form">
+
+            <!-- Section 1: Customer Info -->
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">📋</span>
+                <%= t('contact_delivery_info') %>
+              </h2>
+
+              <div class="form-group">
+                <input type="text" id="fullName" name="fullName" class="form-input" placeholder="<%= t('full_name') %>" required>
+                <div class="form-error" id="nameError"></div>
+              </div>
+
+              <div class="form-group">
+                <input type="tel" id="phone" name="phone" class="form-input" placeholder="<%= t('phone') %>" required dir="ltr" style="text-align: left;">
+                <div class="form-error" id="phoneError"></div>
+              </div>
+
+              <div class="form-group">
+                <input type="text" id="city" name="city" class="form-input" placeholder="<%= t('city') %>" required>
+                <div class="form-error" id="cityError"></div>
+              </div>
+
+              <div class="form-group">
+                <textarea id="address" name="address" class="form-input form-textarea" placeholder="<%= t('address') %>" rows="2" required></textarea>
+                <div class="form-error" id="addressError"></div>
+              </div>
+            </div>
+
+            <!-- Product Summary Card (single product mode) -->
+            <% if (typeof checkoutMode === 'undefined' || checkoutMode === 'single') { %>
+            <% if (typeof product !== 'undefined' && product) { %>
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">🛍️</span>
+                المنتج
+              </h2>
+
+              <div class="cs1-product-card">
+                <div class="cs1-product-card__img-wrap">
+                  <% if (product.main_image) { %>
+                    <img src="/uploads/products/<%= product.main_image %>" alt="<%= product.title %>" class="cs1-product-card__img">
+                  <% } else { %>
+                    <div class="cs1-product-card__img cs1-product-card__img--placeholder">🛍️</div>
+                  <% } %>
+                </div>
+                <div class="cs1-product-card__info">
+                  <div class="cs1-product-card__title"><%= product.title %></div>
+                  <div class="cs1-product-card__price" id="unitPriceDisplay"><%= product.price %> <%= t('currency') %></div>
+                </div>
+              </div>
+
+              <!-- Size Variations -->
+              <% if (typeof sizeVariations !== 'undefined' && sizeVariations && sizeVariations.length > 0) { %>
+              <div class="cs1-variation-group">
+                <label class="cs1-variation-label"><%= t('choose_size') %></label>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <% sizeVariations.forEach(function(v, idx) { %>
+                    <button type="button" class="variation-btn checkout-size-btn<%= idx === 0 ? ' active' : '' %>"
+                      data-variation-id="<%= v.id %>"
+                      data-price-adjustment="<%= v.price_adjustment %>"
+                      data-label="<%= v.label %>"
+                      onclick="selectCheckoutSize(this)"
+                      style="
+                        padding: 10px 20px; border-radius: var(--radius-md); border: 2px solid var(--color-border);
+                        background: var(--color-card); cursor: pointer; font-family: var(--font-body);
+                        font-size: 14px; font-weight: 600; color: var(--color-text);
+                        transition: var(--transition-fast);
+                      "><%= v.label %>
+                      <% if (v.price_adjustment > 0) { %><span style="font-size: 11px; color: var(--color-text-muted);"> (+<%= v.price_adjustment %>)</span><% } %>
+                      <% if (v.price_adjustment < 0) { %><span style="font-size: 11px; color: var(--color-success);"> (<%= v.price_adjustment %>)</span><% } %>
+                    </button>
+                  <% }); %>
+                </div>
+                <input type="hidden" name="size_variation_id" id="sizeVariationId" value="<%= sizeVariations[0].id %>">
+              </div>
+              <% } %>
+
+              <!-- Color Variations -->
+              <% if (typeof colorVariations !== 'undefined' && colorVariations && colorVariations.length > 0) { %>
+              <div class="cs1-variation-group">
+                <label class="cs1-variation-label"><%= t('choose_color') %></label>
+                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                  <% colorVariations.forEach(function(v, idx) { %>
+                    <button type="button" class="variation-btn checkout-color-btn<%= idx === 0 ? ' active' : '' %>"
+                      data-variation-id="<%= v.id %>"
+                      data-price-adjustment="<%= v.price_adjustment %>"
+                      data-label="<%= v.label %>"
+                      onclick="selectCheckoutColor(this)"
+                      title="<%= v.label %>"
+                      style="
+                        width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--color-border);
+                        cursor: pointer; padding: 0; overflow: hidden;
+                        transition: var(--transition-fast);
+                        <% if (v.image_filename) { %>
+                          background-image: url('/uploads/variations/<%= v.image_filename %>');
+                          background-size: cover; background-position: center;
+                        <% } else if (v.value) { %>
+                          background-color: <%= v.value %>;
+                        <% } else { %>
+                          background-color: #ccc;
+                        <% } %>
+                      ">
+                    </button>
+                  <% }); %>
+                </div>
+                <div id="checkoutColorLabel" style="margin-top: 6px; font-size: 13px; color: var(--color-text-secondary);">
+                  <% if (colorVariations.length > 0) { %><%= colorVariations[0].label %><% } %>
+                </div>
+                <input type="hidden" name="color_variation_id" id="colorVariationId" value="<%= colorVariations[0].id %>">
+              </div>
+              <% } %>
+
+              <!-- Quantity Selector -->
+              <div class="cs1-variation-group">
+                <label class="cs1-variation-label"><%= t('quantity') %></label>
+                <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                  <div class="qty-control">
+                    <button type="button" class="qty-control__btn" id="qtyMinus">−</button>
+                    <div class="qty-control__value" id="qtyValue">1</div>
+                    <button type="button" class="qty-control__btn" id="qtyPlus">+</button>
+                  </div>
+                  <div class="qty-control__price" id="qtyPrice"><%= product.price %> <%= t('currency') %></div>
+                </div>
+                <div class="qty-control__detail" id="qtyDetail" style="display: none;">
+                  <span id="qtyCalc"></span>
+                </div>
+              </div>
+              <input type="hidden" name="quantity" id="quantityInput" value="1">
+            </div>
+            <% } %>
+            <% } %>
+
+            <!-- Cart Mode: Items Summary -->
+            <% if (typeof checkoutMode !== 'undefined' && checkoutMode === 'cart' && typeof cartItems !== 'undefined') { %>
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">🛒</span>
+                <%= t('shopping_cart') %>
+              </h2>
+
+              <% cartItems.forEach(function(item) { %>
+              <div class="cs1-product-card" style="margin-bottom: 12px;">
+                <div class="cs1-product-card__img-wrap" style="width: 60px; height: 60px;">
+                  <% if (item.main_image) { %>
+                    <img src="/uploads/products/<%= item.main_image %>" alt="<%= item.title %>" class="cs1-product-card__img" style="width: 60px; height: 60px;">
+                  <% } else { %>
+                    <div class="cs1-product-card__img cs1-product-card__img--placeholder" style="width: 60px; height: 60px; font-size: 20px;">🛍️</div>
+                  <% } %>
+                </div>
+                <div class="cs1-product-card__info">
+                  <div class="cs1-product-card__title" style="font-size: 14px;"><%= item.title %></div>
+                  <% if (item.size_label) { %><div style="font-size: 11px; color: var(--color-text-muted);"><%= t('variations_size') %>: <%= item.size_label %></div><% } %>
+                  <% if (item.color_label) { %><div style="font-size: 11px; color: var(--color-text-muted);"><%= t('variations_color') %>: <%= item.color_label %></div><% } %>
+                  <div class="cs1-product-card__price"><%= item.quantity %> x <%= item.unit_price %> <%= t('currency') %></div>
+                </div>
+              </div>
+              <% }); %>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--color-border); margin-top: 8px;">
+                <span style="font-weight: 700; font-size: 15px;"><%= t('subtotal') %></span>
+                <span style="font-weight: 800; font-size: 16px; color: var(--color-primary);"><%= cartTotal %> <%= t('currency') %></span>
+              </div>
+              <input type="hidden" name="quantity" id="quantityInput" value="1">
+            </div>
+            <% } %>
+
+            <!-- Section: Shipping Company Selection -->
+            <% if (typeof shippingCompanies !== 'undefined' && shippingCompanies && shippingCompanies.length > 0) { %>
+            <div class="form-section">
+              <h2 class="form-section__title">
+                <span class="form-section__title-icon">🚚</span>
+                شركة التوصيل
+              </h2>
+
+              <div class="cs1-shipping-options" id="shippingOptions">
+                <% shippingCompanies.forEach(function(sc, idx) { %>
+                <label class="cs1-shipping-option">
+                  <input type="radio" name="shipping_company_id" value="<%= sc.id %>"
+                    data-payment-mode="<%= sc.payment_mode %>"
+                    data-advance-amount="<%= sc.advance_amount || 0 %>"
+                    data-delivery-fee="<%= sc.delivery_fee || 0 %>"
+                    data-delivery-time="<%= sc.delivery_time || '' %>"
+                    data-company-name="<%= sc.name %>"
+                    <%= idx === 0 ? 'checked' : '' %>>
+                  <div class="cs1-shipping-card">
+                    <div class="cs1-shipping-card__radio"></div>
+                    <div class="cs1-shipping-card__logo-wrap">
+                      <% if (sc.logo_filename) { %>
+                        <img src="/uploads/shipping/<%= sc.logo_filename %>" alt="<%= sc.name %>" class="cs1-shipping-card__logo">
+                      <% } else { %>
+                        <div class="cs1-shipping-card__logo cs1-shipping-card__logo--placeholder">🚚</div>
+                      <% } %>
+                    </div>
+                    <div class="cs1-shipping-card__info">
+                      <div class="cs1-shipping-card__name"><%= sc.name %></div>
+                      <% if (sc.delivery_time) { %>
+                        <div class="cs1-shipping-card__time">⏱ <%= sc.delivery_time %></div>
+                      <% } %>
+                      <% if (sc.payment_mode === 'full') { %>
+                        <div class="cs1-shipping-card__mode">الدفع الكامل — توصيل مجاني</div>
+                      <% } else { %>
+                        <div class="cs1-shipping-card__mode">عربون <strong><%= sc.advance_amount || 0 %> <%= t('currency') %></strong> — المتبقي عند الاستلام</div>
+                        <% if (sc.delivery_fee) { %>
+                          <div class="cs1-shipping-card__fee"><%= t('delivery_fee') %>: <%= sc.delivery_fee %> <%= t('currency') %></div>
+                        <% } %>
+                      <% } %>
+                      <% if (sc.description) { %>
+                        <div class="cs1-shipping-card__desc"><%= sc.description %></div>
+                      <% } %>
+                    </div>
+                    <div class="cs1-shipping-card__price-badge" id="shippingBadge_<%= sc.id %>">
+                      <% if (sc.payment_mode === 'full') { %>
+                        <span class="cs1-badge cs1-badge--full"><%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %> <%= t('currency') %></span>
+                      <% } else { %>
+                        <span class="cs1-badge cs1-badge--advance"><%= sc.advance_amount || 0 %> <%= t('currency') %></span>
+                      <% } %>
+                    </div>
+                  </div>
+                </label>
+                <% }); %>
+              </div>
+            </div>
+            <% } %>
+
+            <!-- Hidden fields for variation info -->
+            <input type="hidden" name="variation_info" id="variationInfoInput" value="{}">
+            <% if (typeof product !== 'undefined' && product) { %>
+              <input type="hidden" name="product_id" value="<%= product.id %>">
+              <input type="hidden" name="product_slug" value="<%= product.slug %>">
+            <% } %>
+            <input type="hidden" name="checkout_mode" value="<%= typeof checkoutMode !== 'undefined' ? checkoutMode : 'single' %>">
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn--primary btn--lg btn--full" id="submitBtn" style="margin-top: 8px;">
+              متابعة الطلب ←
+            </button>
+
+          </div>
+
+          <!-- Order Summary Sidebar -->
+          <div class="order-summary">
+            <h3 class="order-summary__title"><%= t('order_summary') %></h3>
+
+            <% if (typeof checkoutMode !== 'undefined' && checkoutMode === 'cart' && typeof cartItems !== 'undefined') { %>
+              <!-- Cart mode summary -->
+              <% cartItems.forEach(function(item) { %>
+              <div class="order-summary__product" style="margin-bottom: 12px;">
+                <% if (item.main_image) { %>
+                  <img class="order-summary__product-img" src="/uploads/products/<%= item.main_image %>" alt="<%= item.title %>" style="width: 60px; height: 60px; object-fit: cover; border-radius: 10px;">
+                <% } else { %>
+                  <div class="order-summary__product-img" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--color-bg-warm); border-radius: 10px;">🛍️</div>
+                <% } %>
+                <div class="order-summary__product-info">
+                  <div class="order-summary__product-name" style="font-size: 14px;"><%= item.title %></div>
+                  <% if (item.size_label) { %><div style="font-size: 11px; color: var(--color-text-muted);"><%= t('variations_size') %>: <%= item.size_label %></div><% } %>
+                  <% if (item.color_label) { %><div style="font-size: 11px; color: var(--color-text-muted);"><%= t('variations_color') %>: <%= item.color_label %></div><% } %>
+                  <div class="order-summary__product-qty"><%= t('quantity') %>: <%= item.quantity %> x <%= item.unit_price %> <%= t('currency') %></div>
+                </div>
+              </div>
+              <% }); %>
+            <% } else if (typeof product !== 'undefined' && product) { %>
+              <!-- Single product mode -->
+              <div class="order-summary__product">
+                <% if (product.main_image) { %>
+                  <img class="order-summary__product-img" src="/uploads/products/<%= product.main_image %>" alt="<%= product.title %>" style="width: 80px; height: 80px; object-fit: cover; border-radius: 12px;">
+                <% } else { %>
+                  <div class="order-summary__product-img">🛍️</div>
+                <% } %>
+                <div class="order-summary__product-info">
+                  <div class="order-summary__product-name"><%= product.title %></div>
+                  <div class="order-summary__product-variant" id="summaryVariant"><%= t('original_product') %></div>
+                  <div class="order-summary__product-qty" id="summaryQty"><%= t('quantity') %>: 1</div>
+                </div>
+              </div>
+            <% } %>
+
+            <!-- Subtotal row (visible when qty > 1) -->
+            <div class="order-summary__row" id="summaryQtyRow" style="display: none;">
+              <span class="order-summary__row-label" id="summaryQtyLabel"></span>
+              <span class="order-summary__row-value" id="summarySubtotal"></span>
+            </div>
+
+            <!-- Shipping company row -->
+            <div class="order-summary__row">
+              <span class="order-summary__row-label">شركة التوصيل</span>
+              <span class="order-summary__row-value" id="summaryShippingCompany">—</span>
+            </div>
+
+            <!-- Delivery type row -->
+            <div class="order-summary__row">
+              <span class="order-summary__row-label"><%= t('delivery') %></span>
+              <span class="order-summary__row-value" id="summaryDelivery" style="color: var(--color-success);">—</span>
+            </div>
+
+            <!-- Delivery fee row (for advance mode) -->
+            <div class="order-summary__row" id="summaryDeliveryFeeRow" style="display: none;">
+              <span class="order-summary__row-label"><%= t('delivery_fee') %></span>
+              <span class="order-summary__row-value" id="summaryDeliveryFee">—</span>
+            </div>
+
+            <!-- Total / advance amount -->
+            <div class="order-summary__row order-summary__row--total">
+              <span class="order-summary__row-label" id="summaryTotalLabel"><%= t('amount_required') %></span>
+              <span class="order-summary__row-value" id="summaryTotal"><%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %> <%= t('currency') %></span>
+            </div>
+
+            <!-- Remaining on delivery (advance mode) -->
+            <div class="order-summary__remaining" id="summaryRemaining" style="display: none;">
+              <%= t('remaining_on_delivery') %>: <strong id="summaryRemainingAmount">—</strong>
+            </div>
+
+            <div class="order-summary__secure">🔒 <%= t('secure_transaction') %></div>
+          </div>
+
+        </div>
+      </form>
+
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <!-- Page-specific styles -->
+  <style>
+    /* Step indicator enhancements */
+    .cs1-steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .cs1-step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      background: var(--color-bg-warm, #f5f5f5);
+      color: var(--color-text-muted, #999);
+      border: 2px solid var(--color-border, #e0e0e0);
+      transition: all 0.3s ease;
+    }
+    .cs1-step-num--active {
+      background: var(--color-primary, #000);
+      color: var(--color-button-text, #fff);
+      border-color: var(--color-primary, #000);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .cs1-step-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-muted, #999);
+      margin: 0 4px;
+    }
+    .checkout-header__step--active .cs1-step-label {
+      color: var(--color-text, #000);
+    }
+
+    /* Variation styles (matching existing checkout) */
+    .variation-btn.active {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 2px var(--color-primary-light);
+    }
+    .checkout-color-btn.active {
+      border-color: var(--color-primary) !important;
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+      transform: scale(1.1);
+    }
+
+    /* Product card */
+    .cs1-product-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      background: var(--color-bg-warm, #fafafa);
+      border-radius: var(--radius-lg, 14px);
+      border: 1px solid var(--color-border, #e0e0e0);
+    }
+    .cs1-product-card__img-wrap {
+      flex-shrink: 0;
+      width: 80px;
+      height: 80px;
+    }
+    .cs1-product-card__img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: var(--radius-md, 10px);
+    }
+    .cs1-product-card__img--placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      background: var(--color-bg-warm, #f0f0f0);
+      border-radius: var(--radius-md, 10px);
+    }
+    .cs1-product-card__info {
+      flex: 1;
+      min-width: 0;
+    }
+    .cs1-product-card__title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+    .cs1-product-card__price {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--color-primary, #000);
+    }
+
+    /* Variation groups */
+    .cs1-variation-group {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-border, #eee);
+    }
+    .cs1-variation-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 10px;
+    }
+
+    /* Shipping options */
+    .cs1-shipping-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .cs1-shipping-option {
+      cursor: pointer;
+      display: block;
+    }
+    .cs1-shipping-option input[type="radio"] {
+      display: none;
+    }
+    .cs1-shipping-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      border: 2px solid var(--color-border, #e0e0e0);
+      border-radius: var(--radius-lg, 14px);
+      background: var(--color-card, #fff);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+    .cs1-shipping-card:hover {
+      border-color: var(--color-text-muted, #999);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .cs1-shipping-option input:checked + .cs1-shipping-card {
+      border-color: var(--color-primary, #000);
+      box-shadow: 0 0 0 1px var(--color-primary, #000), 0 4px 16px rgba(0,0,0,0.08);
+      background: var(--color-bg-warm, #fafafa);
+    }
+
+    /* Shipping card radio indicator */
+    .cs1-shipping-card__radio {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--color-border, #ccc);
+      flex-shrink: 0;
+      position: relative;
+      transition: all 0.25s ease;
+    }
+    .cs1-shipping-option input:checked + .cs1-shipping-card .cs1-shipping-card__radio {
+      border-color: var(--color-primary, #000);
+    }
+    .cs1-shipping-option input:checked + .cs1-shipping-card .cs1-shipping-card__radio::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--color-primary, #000);
+    }
+
+    /* Shipping logo */
+    .cs1-shipping-card__logo-wrap {
+      flex-shrink: 0;
+      width: 52px;
+      height: 52px;
+    }
+    .cs1-shipping-card__logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      border-radius: var(--radius-sm, 8px);
+      background: #fff;
+      border: 1px solid var(--color-border, #eee);
+      padding: 4px;
+    }
+    .cs1-shipping-card__logo--placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      background: var(--color-bg-warm, #f5f5f5);
+      border-radius: var(--radius-sm, 8px);
+      width: 52px;
+      height: 52px;
+    }
+
+    /* Shipping card info */
+    .cs1-shipping-card__info {
+      flex: 1;
+      min-width: 0;
+    }
+    .cs1-shipping-card__name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: 4px;
+    }
+    .cs1-shipping-card__time {
+      font-size: 12px;
+      color: var(--color-text-muted, #888);
+      margin-bottom: 4px;
+    }
+    .cs1-shipping-card__mode {
+      font-size: 13px;
+      color: var(--color-text-secondary, #555);
+      line-height: 1.5;
+    }
+    .cs1-shipping-card__fee {
+      font-size: 12px;
+      color: var(--color-text-muted, #888);
+      margin-top: 2px;
+    }
+    .cs1-shipping-card__desc {
+      font-size: 12px;
+      color: var(--color-text-muted, #999);
+      margin-top: 4px;
+      line-height: 1.4;
+    }
+
+    /* Price badge */
+    .cs1-shipping-card__price-badge {
+      flex-shrink: 0;
+    }
+    .cs1-badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .cs1-badge--full {
+      background: var(--color-primary, #000);
+      color: var(--color-button-text, #fff);
+    }
+    .cs1-badge--advance {
+      background: var(--color-bg-warm, #f5f5f5);
+      color: var(--color-primary, #000);
+      border: 1px solid var(--color-border, #ddd);
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .cs1-steps {
+        gap: 4px;
+      }
+      .cs1-step-num {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+      }
+      .cs1-step-label {
+        font-size: 11px;
+      }
+      .cs1-shipping-card {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px;
+      }
+      .cs1-shipping-card__logo-wrap {
+        width: 44px;
+        height: 44px;
+      }
+      .cs1-shipping-card__logo {
+        width: 44px;
+        height: 44px;
+      }
+      .cs1-shipping-card__logo--placeholder {
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+      }
+      .cs1-shipping-card__price-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+      }
+      [dir="rtl"] .cs1-shipping-card__price-badge {
+        left: auto;
+        right: 12px;
+      }
+      .cs1-product-card {
+        padding: 12px;
+        gap: 10px;
+      }
+      .cs1-product-card__img-wrap {
+        width: 64px;
+        height: 64px;
+      }
+      .cs1-product-card__img {
+        width: 64px;
+        height: 64px;
+      }
+      .cs1-product-card__title {
+        font-size: 14px;
+      }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script>
+    // ========================================
+    // Checkout Step 1 — Client-side logic
+    // ========================================
+
+    var CHECKOUT_MODE = '<%= typeof checkoutMode !== 'undefined' ? checkoutMode : 'single' %>';
+    var UNIT_PRICE = <%= typeof product !== 'undefined' && product ? product.price : (typeof cartTotal !== 'undefined' ? cartTotal : 0) %>;
+    var CART_TOTAL = <%= typeof cartTotal !== 'undefined' ? cartTotal : 0 %>;
+    var T_CURRENCY = '<%= t("currency") %>';
+    var T_QUANTITY = '<%= t("quantity") %>';
+    var T_SIZE = '<%= t("variations_size") %>';
+    var T_COLOR = '<%= t("variations_color") %>';
+    var T_ORIGINAL_PRODUCT = '<%= t("original_product") %>';
+    var T_FREE_DELIVERY = '<%= t("free_delivery") %>';
+    var T_DELIVERY_FEE_LABEL = '<%= t("delivery_fee") %>';
+    var T_REMAINING_ON_DELIVERY = '<%= t("remaining_on_delivery") %>';
+    var T_ENTER_NAME = '<%= t("enter_name") %>';
+    var T_ENTER_PHONE = '<%= t("enter_phone") %>';
+    var T_INVALID_PHONE = '<%= t("invalid_phone") %>';
+    var T_ENTER_CITY = '<%= t("enter_city") %>';
+    var T_ENTER_ADDRESS = '<%= t("enter_address") %>';
+    var T_FILL_REQUIRED = '<%= t("fill_required_fields") %>';
+    var T_ERROR_OCCURRED = '<%= t("error_occurred") %>';
+
+    // Variation state
+    var selectedSizeId = null;
+    var selectedColorId = null;
+    var sizePriceAdj = 0;
+    var colorPriceAdj = 0;
+    var selectedSizeLabel = '';
+    var selectedColorLabel = '';
+
+    // Init default variation selections
+    (function() {
+      var firstSize = document.querySelector('.checkout-size-btn');
+      if (firstSize) {
+        selectedSizeId = parseInt(firstSize.dataset.variationId);
+        sizePriceAdj = parseFloat(firstSize.dataset.priceAdjustment) || 0;
+        selectedSizeLabel = firstSize.dataset.label || '';
+      }
+      var firstColor = document.querySelector('.checkout-color-btn');
+      if (firstColor) {
+        selectedColorId = parseInt(firstColor.dataset.variationId);
+        colorPriceAdj = parseFloat(firstColor.dataset.priceAdjustment) || 0;
+        selectedColorLabel = firstColor.dataset.label || '';
+      }
+    })();
+
+    function selectCheckoutSize(btn) {
+      document.querySelectorAll('.checkout-size-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedSizeId = parseInt(btn.dataset.variationId);
+      sizePriceAdj = parseFloat(btn.dataset.priceAdjustment) || 0;
+      selectedSizeLabel = btn.dataset.label || '';
+      var hiddenInput = document.getElementById('sizeVariationId');
+      if (hiddenInput) hiddenInput.value = selectedSizeId;
+      updateAllPrices();
+    }
+
+    function selectCheckoutColor(btn) {
+      document.querySelectorAll('.checkout-color-btn').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      selectedColorId = parseInt(btn.dataset.variationId);
+      colorPriceAdj = parseFloat(btn.dataset.priceAdjustment) || 0;
+      selectedColorLabel = btn.dataset.label || '';
+      var label = document.getElementById('checkoutColorLabel');
+      if (label) label.textContent = btn.title;
+      var hiddenInput = document.getElementById('colorVariationId');
+      if (hiddenInput) hiddenInput.value = selectedColorId;
+      updateAllPrices();
+    }
+  </script>
+
+  <script>
+  (function() {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+      var qtyValueEl = document.getElementById('qtyValue');
+      var qtyMinusBtn = document.getElementById('qtyMinus');
+      var qtyPlusBtn = document.getElementById('qtyPlus');
+      var qtyPriceEl = document.getElementById('qtyPrice');
+      var qtyDetailEl = document.getElementById('qtyDetail');
+      var qtyCalcEl = document.getElementById('qtyCalc');
+      var quantityInput = document.getElementById('quantityInput');
+
+      var summaryQtyEl = document.getElementById('summaryQty');
+      var summaryQtyRow = document.getElementById('summaryQtyRow');
+      var summaryQtyLabel = document.getElementById('summaryQtyLabel');
+      var summarySubtotal = document.getElementById('summarySubtotal');
+      var summaryDeliveryEl = document.getElementById('summaryDelivery');
+      var summaryDeliveryFeeRow = document.getElementById('summaryDeliveryFeeRow');
+      var summaryDeliveryFee = document.getElementById('summaryDeliveryFee');
+      var summaryTotalEl = document.getElementById('summaryTotal');
+      var summaryTotalLabel = document.getElementById('summaryTotalLabel');
+      var summaryRemaining = document.getElementById('summaryRemaining');
+      var summaryRemainingAmount = document.getElementById('summaryRemainingAmount');
+      var summaryVariant = document.getElementById('summaryVariant');
+      var summaryShippingCompany = document.getElementById('summaryShippingCompany');
+      var unitPriceDisplay = document.getElementById('unitPriceDisplay');
+
+      var form = document.getElementById('checkoutStep1Form');
+      var submitBtn = document.getElementById('submitBtn');
+
+      // ---- Quantity buttons ----
+      if (qtyMinusBtn) {
+        qtyMinusBtn.addEventListener('click', function() {
+          var qty = parseInt(qtyValueEl.textContent) || 1;
+          if (qty > 1) { qty--; qtyValueEl.textContent = qty; if (quantityInput) quantityInput.value = qty; updateAllPrices(); }
+        });
+      }
+      if (qtyPlusBtn) {
+        qtyPlusBtn.addEventListener('click', function() {
+          var qty = parseInt(qtyValueEl.textContent) || 1;
+          if (qty < 10) { qty++; qtyValueEl.textContent = qty; if (quantityInput) quantityInput.value = qty; updateAllPrices(); }
+        });
+      }
+
+      // ---- Shipping company change ----
+      var shippingRadios = document.querySelectorAll('input[name="shipping_company_id"]');
+      shippingRadios.forEach(function(radio) {
+        radio.addEventListener('change', function() { updateAllPrices(); });
+      });
+
+      // ---- Master price update ----
+      window.updateAllPrices = function() {
+        var qty = qtyValueEl ? parseInt(qtyValueEl.textContent) || 1 : 1;
+        var effectiveUnitPrice = UNIT_PRICE + sizePriceAdj + colorPriceAdj;
+        var totalProductPrice = CHECKOUT_MODE === 'cart' ? CART_TOTAL : (qty * effectiveUnitPrice);
+
+        // Get selected shipping company
+        var selectedShipping = document.querySelector('input[name="shipping_company_id"]:checked');
+        var paymentMode = selectedShipping ? selectedShipping.dataset.paymentMode : 'full';
+        var advanceAmount = selectedShipping ? parseFloat(selectedShipping.dataset.advanceAmount) || 0 : 0;
+        var deliveryFee = selectedShipping ? parseFloat(selectedShipping.dataset.deliveryFee) || 0 : 0;
+        var companyName = selectedShipping ? selectedShipping.dataset.companyName : '';
+        var deliveryTime = selectedShipping ? selectedShipping.dataset.deliveryTime : '';
+
+        var isFull = paymentMode === 'full';
+        var amountToPay, remainingAmount;
+
+        if (isFull) {
+          // Full payment mode: customer pays product price, free delivery
+          amountToPay = totalProductPrice;
+          remainingAmount = 0;
+        } else {
+          // Advance mode: customer pays advance_amount upfront
+          amountToPay = advanceAmount;
+          remainingAmount = totalProductPrice - advanceAmount + deliveryFee;
+        }
+
+        // Update unit price display (with adjustments)
+        if (unitPriceDisplay) {
+          unitPriceDisplay.textContent = effectiveUnitPrice + ' ' + T_CURRENCY;
+        }
+
+        // Update quantity price display
+        if (qtyPriceEl) qtyPriceEl.textContent = totalProductPrice + ' ' + T_CURRENCY;
+        if (qty > 1 && qtyDetailEl && qtyCalcEl) {
+          qtyDetailEl.style.display = 'block';
+          qtyCalcEl.textContent = qty + ' \u00d7 ' + effectiveUnitPrice + ' ' + T_CURRENCY + ' = ' + totalProductPrice + ' ' + T_CURRENCY;
+        } else if (qtyDetailEl) {
+          qtyDetailEl.style.display = 'none';
+        }
+
+        // Update shipping badge prices
+        shippingRadios.forEach(function(radio) {
+          var badgeEl = document.getElementById('shippingBadge_' + radio.value);
+          if (badgeEl) {
+            var mode = radio.dataset.paymentMode;
+            var adv = parseFloat(radio.dataset.advanceAmount) || 0;
+            if (mode === 'full') {
+              badgeEl.innerHTML = '<span class="cs1-badge cs1-badge--full">' + totalProductPrice + ' ' + T_CURRENCY + '</span>';
+            } else {
+              badgeEl.innerHTML = '<span class="cs1-badge cs1-badge--advance">' + adv + ' ' + T_CURRENCY + '</span>';
+            }
+          }
+        });
+
+        // ---- Summary sidebar ----
+
+        // Variation
+        if (summaryVariant) {
+          var parts = [];
+          if (selectedSizeLabel) parts.push(T_SIZE + ': ' + selectedSizeLabel);
+          if (selectedColorLabel) parts.push(T_COLOR + ': ' + selectedColorLabel);
+          summaryVariant.textContent = parts.length > 0 ? parts.join(' | ') : T_ORIGINAL_PRODUCT;
+        }
+
+        // Quantity
+        if (summaryQtyEl) summaryQtyEl.textContent = T_QUANTITY + ': ' + qty;
+        if (qty > 1 && summaryQtyRow) {
+          summaryQtyRow.style.display = '';
+          if (summaryQtyLabel) summaryQtyLabel.textContent = qty + ' \u00d7 ' + effectiveUnitPrice + ' ' + T_CURRENCY;
+          if (summarySubtotal) summarySubtotal.textContent = totalProductPrice + ' ' + T_CURRENCY;
+        } else if (summaryQtyRow) {
+          summaryQtyRow.style.display = 'none';
+        }
+
+        // Shipping company name
+        if (summaryShippingCompany) {
+          summaryShippingCompany.textContent = companyName || '—';
+        }
+
+        // Delivery info
+        if (summaryDeliveryEl) {
+          if (isFull) {
+            summaryDeliveryEl.textContent = T_FREE_DELIVERY + (deliveryTime ? ' — ' + deliveryTime : '');
+            summaryDeliveryEl.style.color = 'var(--color-success)';
+          } else {
+            summaryDeliveryEl.textContent = deliveryTime || T_DELIVERY_FEE_LABEL;
+            summaryDeliveryEl.style.color = 'var(--color-text-secondary)';
+          }
+        }
+
+        // Delivery fee row
+        if (summaryDeliveryFeeRow) {
+          if (!isFull && deliveryFee > 0) {
+            summaryDeliveryFeeRow.style.display = '';
+            if (summaryDeliveryFee) summaryDeliveryFee.textContent = deliveryFee + ' ' + T_CURRENCY;
+          } else {
+            summaryDeliveryFeeRow.style.display = 'none';
+          }
+        }
+
+        // Total
+        if (summaryTotalEl) {
+          summaryTotalEl.textContent = amountToPay + ' ' + T_CURRENCY;
+        }
+        if (summaryTotalLabel) {
+          summaryTotalLabel.textContent = isFull ? '<%= t("amount_required") %>' : '<%= t("deposit_amount") %>';
+        }
+
+        // Remaining
+        if (summaryRemaining) {
+          if (!isFull && remainingAmount > 0) {
+            summaryRemaining.style.display = 'block';
+            if (summaryRemainingAmount) summaryRemainingAmount.textContent = remainingAmount + ' ' + T_CURRENCY;
+          } else {
+            summaryRemaining.style.display = 'none';
+          }
+        }
+      };
+
+      // Initial update
+      updateAllPrices();
+
+      // ---- Form validation & submission ----
+      var isSubmitting = false;
+
+      if (form) {
+        form.addEventListener('submit', function(e) {
+          e.preventDefault();
+
+          if (isSubmitting) return;
+
+          // Clear previous errors
+          document.querySelectorAll('.form-input--error').forEach(function(el) { el.classList.remove('form-input--error'); });
+          document.querySelectorAll('.form-error').forEach(function(el) { el.classList.remove('visible'); });
+
+          var fullName = document.getElementById('fullName');
+          var phone = document.getElementById('phone');
+          var cityEl = document.getElementById('city');
+          var addressEl = document.getElementById('address');
+
+          var isValid = true;
+
+          // Validate name
+          if (!fullName.value.trim()) { showFieldErr(fullName, T_ENTER_NAME); isValid = false; }
+
+          // Validate phone
+          if (!phone.value.trim()) {
+            showFieldErr(phone, T_ENTER_PHONE); isValid = false;
+          } else {
+            var phoneClean = phone.value.trim().replace(/[\s\-\+]/g, '');
+            if (!/^\d{9,15}$/.test(phoneClean)) { showFieldErr(phone, T_INVALID_PHONE); isValid = false; }
+          }
+
+          // Validate city
+          if (cityEl && !cityEl.value.trim()) { showFieldErr(cityEl, T_ENTER_CITY); isValid = false; }
+
+          // Validate address
+          if (addressEl && !addressEl.value.trim()) { showFieldErr(addressEl, T_ENTER_ADDRESS); isValid = false; }
+
+          // Validate shipping company selection
+          var selectedShipping = document.querySelector('input[name="shipping_company_id"]:checked');
+          if (document.querySelectorAll('input[name="shipping_company_id"]').length > 0 && !selectedShipping) {
+            if (typeof showToast === 'function') showToast('يرجى اختيار شركة التوصيل', 'error');
+            isValid = false;
+          }
+
+          if (!isValid) {
+            if (typeof showToast === 'function') showToast(T_FILL_REQUIRED, 'error');
+            // Scroll to first error
+            var firstError = document.querySelector('.form-input--error');
+            if (firstError) firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
+
+          // Build variation_info JSON
+          var variationInfo = {};
+          if (selectedSizeLabel) variationInfo.size = selectedSizeLabel;
+          if (selectedColorLabel) variationInfo.color = selectedColorLabel;
+          if (sizePriceAdj) variationInfo.size_adjustment = sizePriceAdj;
+          if (colorPriceAdj) variationInfo.color_adjustment = colorPriceAdj;
+          var variationInput = document.getElementById('variationInfoInput');
+          if (variationInput) variationInput.value = JSON.stringify(variationInfo);
+
+          // Update quantity hidden input
+          var qty = qtyValueEl ? parseInt(qtyValueEl.textContent) || 1 : 1;
+          if (quantityInput) quantityInput.value = qty;
+
+          // Show loading state on button
+          isSubmitting = true;
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg style="animation:spin 1s linear infinite;width:20px;height:20px;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4 31.4" stroke-dashoffset="10"/></svg> جاري المعالجة...</span>';
+          }
+
+          // Submit the form natively
+          form.submit();
+        });
+      }
+
+      function showFieldErr(input, message) {
+        input.classList.add('form-input--error');
+        var group = input.closest('.form-group');
+        if (group) {
+          var errorEl = group.querySelector('.form-error');
+          if (errorEl) { errorEl.textContent = '\u26a0\ufe0f ' + message; errorEl.classList.add('visible'); }
+        }
+        // Focus the first errored input
+        if (document.querySelectorAll('.form-input--error').length === 1) {
+          input.focus();
+        }
+      }
+
+    });
+  })();
+  </script>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

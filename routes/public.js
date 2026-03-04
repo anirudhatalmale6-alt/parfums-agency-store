@@ -347,23 +347,132 @@ router.get('/product/:slug', (req, res) => {
 
 
 // ============================================================
-// PRODUCT CHECKOUT PAGE
+// PRODUCT CHECKOUT — STEP 1: Customer info + shipping selection
 // ============================================================
 router.get('/product/:slug/checkout', (req, res) => {
   const product = db.prepare('SELECT * FROM products WHERE slug = ? AND is_active = 1').get(req.params.slug);
   if (!product) return res.status(404).render('404');
 
-  const bankSettings = getBankSettings();
   const sizeVariations = getVariations(product.id, 'size');
   const colorVariations = getVariations(product.id, 'color');
+  let shippingCompanies = [];
+  try { shippingCompanies = db.prepare('SELECT * FROM shipping_companies WHERE is_active = 1 ORDER BY sort_order').all(); } catch(e) {}
 
-  res.render('checkout', {
+  res.render('checkout-step1', {
     product,
-    bankSettings,
     sizeVariations,
     colorVariations,
+    shippingCompanies,
     checkoutMode: 'single'
   });
+});
+
+// ============================================================
+// PRODUCT CHECKOUT — STEP 1 POST: Create order + show confirmation
+// ============================================================
+router.post('/product/:slug/checkout', (req, res) => {
+  try {
+    const product = db.prepare('SELECT * FROM products WHERE slug = ?').get(req.params.slug);
+    if (!product) return res.status(404).render('404');
+
+    const { fullName, phone, quantity, city, address, variation_info, shipping_company_id, size_variation_id, color_variation_id } = req.body;
+    const qty = parseInt(quantity) || 1;
+
+    // Calculate price with variation adjustments
+    let unitPrice = product.price;
+    if (size_variation_id) {
+      const sv = db.prepare('SELECT price_adjustment FROM product_variations WHERE id = ?').get(size_variation_id);
+      if (sv) unitPrice += sv.price_adjustment;
+    }
+    if (color_variation_id) {
+      const cv = db.prepare('SELECT price_adjustment FROM product_variations WHERE id = ?').get(color_variation_id);
+      if (cv) unitPrice += cv.price_adjustment;
+    }
+
+    const totalPrice = qty * unitPrice;
+
+    // Get shipping company details
+    let shippingCompany = null;
+    let paymentType = 'bank_full';
+    let paymentAmount = totalPrice;
+    let remainingAmount = 0;
+    let deliveryOption = 'full';
+    let shippingCompanyName = '';
+
+    if (shipping_company_id) {
+      shippingCompany = db.prepare('SELECT * FROM shipping_companies WHERE id = ?').get(shipping_company_id);
+      if (shippingCompany) {
+        shippingCompanyName = shippingCompany.name;
+        if (shippingCompany.payment_mode === 'advance') {
+          paymentType = 'bank_deposit';
+          paymentAmount = shippingCompany.advance_amount;
+          remainingAmount = totalPrice - shippingCompany.advance_amount + (shippingCompany.delivery_fee || 0);
+          deliveryOption = 'deposit';
+        } else {
+          paymentType = 'bank_full';
+          paymentAmount = totalPrice;
+          remainingAmount = 0;
+          deliveryOption = 'full';
+        }
+      }
+    }
+
+    const orderRef = generateOrderRef();
+    const referralCode = req.session.referral_code || '';
+    const gift = getEligibleGift(totalPrice);
+    const giftInfo = gift ? JSON.stringify({ name: gift.name, description: gift.description }) : '';
+
+    db.prepare(`
+      INSERT INTO orders (product_id, order_ref, full_name, phone, quantity, unit_price, total_price,
+        delivery_option, payment_amount, remaining_amount, receipt_filename, status,
+        payment_type, variation_info, referral_code, gift_info, city, address,
+        shipping_company_id, shipping_company_name)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      product.id, orderRef, fullName, phone, qty, unitPrice,
+      totalPrice, deliveryOption, paymentAmount, remainingAmount,
+      '', 'pending',
+      paymentType, variation_info || '', referralCode, giftInfo,
+      city || '', address || '',
+      shipping_company_id || null, shippingCompanyName
+    );
+
+    // Handle referral commission
+    if (referralCode) {
+      try {
+        const referrer = db.prepare('SELECT * FROM users WHERE referral_code = ? AND is_active = 1').get(referralCode);
+        if (referrer) {
+          const orderId = db.prepare('SELECT id FROM orders WHERE order_ref = ?').get(orderRef);
+          const commissionRate = referrer.commission_rate || 10;
+          const commissionAmount = totalPrice * (commissionRate / 100);
+          db.prepare(`
+            INSERT INTO referral_commissions (user_id, order_id, order_amount, commission_rate, commission_amount, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(referrer.id, orderId.id, totalPrice, commissionRate, commissionAmount, 'pending');
+          db.prepare(`
+            UPDATE users SET total_earned = total_earned + ?, available_balance = available_balance + ?,
+              total_orders = total_orders + 1, updated_at = datetime('now')
+            WHERE id = ?
+          `).run(commissionAmount, commissionAmount, referrer.id);
+        }
+      } catch (refErr) {
+        console.error('Referral commission error:', refErr);
+      }
+    }
+
+    // Render step 2 (order confirmation)
+    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(orderRef);
+    res.render('checkout-step2', {
+      orderRef,
+      order,
+      product,
+      shippingCompany,
+      checkoutMode: 'single'
+    });
+  } catch (err) {
+    console.error('Checkout step1 POST error:', err);
+    res.status(500).render('404');
+  }
 });
 
 
@@ -660,7 +769,7 @@ router.post('/cart/remove', (req, res) => {
   }
 });
 
-// GET /cart/checkout — render checkout for cart
+// GET /cart/checkout — render checkout step 1 for cart
 router.get('/cart/checkout', (req, res) => {
   const sessionId = req.sessionID;
 
@@ -677,7 +786,6 @@ router.get('/cart/checkout', (req, res) => {
   }
 
   let cartTotal = 0;
-  let cartHasCod = false;
   const cartItems = rawItems.map(item => {
     let unitPrice = item.price;
     let sizeLabel = '';
@@ -694,7 +802,6 @@ router.get('/cart/checkout', (req, res) => {
 
     const subtotal = unitPrice * item.quantity;
     cartTotal += subtotal;
-    if (item.cod_enabled) cartHasCod = true;
 
     return {
       ...item,
@@ -705,56 +812,75 @@ router.get('/cart/checkout', (req, res) => {
     };
   });
 
-  const bankSettings = getBankSettings();
-  const giftProduct = getEligibleGift(cartTotal);
+  let shippingCompanies = [];
+  try { shippingCompanies = db.prepare('SELECT * FROM shipping_companies WHERE is_active = 1 ORDER BY sort_order').all(); } catch(e) {}
 
-  res.render('checkout', {
+  res.render('checkout-step1', {
     checkoutMode: 'cart',
     cartItems,
     cartTotal,
-    cartHasCod,
-    bankSettings,
-    giftProduct
+    shippingCompanies
   });
 });
 
-// POST /cart/checkout — submit cart order
-router.post('/cart/checkout', receiptUpload.single('receipt'), (req, res) => {
+// POST /cart/checkout — create cart order + show confirmation (step 2)
+router.post('/cart/checkout', (req, res) => {
   try {
     const sessionId = req.sessionID;
-    const { fullName, phone, payment_type, city, address } = req.body;
+    const { fullName, phone, city, address, shipping_company_id } = req.body;
 
     const rawItems = db.prepare(`
-      SELECT ci.*, p.title, p.price, p.id as pid
+      SELECT ci.*, p.title, p.price, p.id as pid, p.main_image
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
       WHERE ci.session_id = ?
     `).all(sessionId);
 
     if (!rawItems || rawItems.length === 0) {
-      return res.status(400).json({ error: 'السلة فارغة' });
+      return res.redirect('/cart');
     }
 
     let cartTotal = 0;
-    rawItems.forEach(item => {
+    const cartItems = rawItems.map(item => {
       let unitPrice = item.price;
+      let sizeLabel = '';
+      let colorLabel = '';
       if (item.variation_size_id) {
-        const sv = db.prepare('SELECT price_adjustment FROM product_variations WHERE id = ?').get(item.variation_size_id);
-        if (sv) unitPrice += sv.price_adjustment;
+        const sv = db.prepare('SELECT label, price_adjustment FROM product_variations WHERE id = ?').get(item.variation_size_id);
+        if (sv) { unitPrice += sv.price_adjustment; sizeLabel = sv.label; }
       }
       if (item.variation_color_id) {
-        const cv = db.prepare('SELECT price_adjustment FROM product_variations WHERE id = ?').get(item.variation_color_id);
-        if (cv) unitPrice += cv.price_adjustment;
+        const cv = db.prepare('SELECT label, price_adjustment FROM product_variations WHERE id = ?').get(item.variation_color_id);
+        if (cv) { unitPrice += cv.price_adjustment; colorLabel = cv.label; }
       }
-      cartTotal += unitPrice * item.quantity;
+      const subtotal = unitPrice * item.quantity;
+      cartTotal += subtotal;
+      return { ...item, unit_price: unitPrice, subtotal, size_label: sizeLabel, color_label: colorLabel };
     });
 
-    const paymentType = payment_type || 'bank_full';
-    const isCod = paymentType === 'cod';
+    // Shipping company
+    let shippingCompany = null;
+    let paymentType = 'bank_full';
+    let paymentAmount = cartTotal;
+    let remainingAmount = 0;
+    let deliveryOption = 'full';
+    let shippingCompanyName = '';
+
+    if (shipping_company_id) {
+      shippingCompany = db.prepare('SELECT * FROM shipping_companies WHERE id = ?').get(shipping_company_id);
+      if (shippingCompany) {
+        shippingCompanyName = shippingCompany.name;
+        if (shippingCompany.payment_mode === 'advance') {
+          paymentType = 'bank_deposit';
+          paymentAmount = shippingCompany.advance_amount;
+          remainingAmount = cartTotal - shippingCompany.advance_amount + (shippingCompany.delivery_fee || 0);
+          deliveryOption = 'deposit';
+        }
+      }
+    }
+
     const orderRef = generateOrderRef();
     const referralCode = req.session.referral_code || '';
-
-    // Check gift
     const gift = getEligibleGift(cartTotal);
     const giftInfo = gift ? JSON.stringify({ name: gift.name }) : '';
 
@@ -772,21 +898,21 @@ router.post('/cart/checkout', receiptUpload.single('receipt'), (req, res) => {
       return info;
     });
 
-    // Create order for first product (primary), store all details in variation_info
     db.prepare(`
       INSERT INTO orders (product_id, order_ref, full_name, phone, quantity, unit_price, total_price,
         delivery_option, payment_amount, remaining_amount, receipt_filename, status,
-        payment_type, variation_info, referral_code, gift_info, city, address)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        payment_type, variation_info, referral_code, gift_info, city, address,
+        shipping_company_id, shipping_company_name)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       rawItems[0].pid, orderRef, fullName, phone,
       rawItems.reduce((sum, i) => sum + i.quantity, 0),
       0, cartTotal,
-      isCod ? 'cod' : 'full',
-      cartTotal, 0,
-      req.file ? req.file.filename : '', 'pending',
+      deliveryOption, paymentAmount, remainingAmount,
+      '', 'pending',
       paymentType, JSON.stringify(variationDetails), referralCode, giftInfo,
-      city || '', address || ''
+      city || '', address || '',
+      shipping_company_id || null, shippingCompanyName
     );
 
     // Handle referral commission
@@ -815,9 +941,70 @@ router.post('/cart/checkout', receiptUpload.single('receipt'), (req, res) => {
     // Clear cart
     db.prepare('DELETE FROM cart_items WHERE session_id = ?').run(sessionId);
 
-    res.json({ success: true, orderRef });
+    // Render step 2
+    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(orderRef);
+    res.render('checkout-step2', {
+      orderRef,
+      order,
+      shippingCompany,
+      checkoutMode: 'cart',
+      cartItems
+    });
   } catch (err) {
     console.error('Cart checkout error:', err);
+    res.status(500).render('404');
+  }
+});
+
+
+// ============================================================
+// CHECKOUT STEP 3: Bank payment + receipt upload
+// ============================================================
+router.get('/checkout/step3/:orderRef', (req, res) => {
+  try {
+    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(req.params.orderRef);
+    if (!order) return res.status(404).render('404');
+
+    const bankSettings = getBankSettings();
+    let product = null;
+    if (order.product_id) {
+      product = db.prepare('SELECT * FROM products WHERE id = ?').get(order.product_id);
+    }
+    let shippingCompany = null;
+    if (order.shipping_company_id) {
+      try { shippingCompany = db.prepare('SELECT * FROM shipping_companies WHERE id = ?').get(order.shipping_company_id); } catch(e) {}
+    }
+
+    res.render('checkout-step3', {
+      orderRef: order.order_ref,
+      order,
+      product,
+      bankSettings,
+      shippingCompany
+    });
+  } catch (err) {
+    console.error('Checkout step3 GET error:', err);
+    res.status(500).render('404');
+  }
+});
+
+router.post('/checkout/step3/:orderRef', receiptUpload.single('receipt'), (req, res) => {
+  try {
+    const order = db.prepare('SELECT * FROM orders WHERE order_ref = ?').get(req.params.orderRef);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    const receiptFilename = req.file ? req.file.filename : '';
+    if (!receiptFilename) {
+      return res.status(400).json({ error: 'يرجى رفع إيصال الدفع' });
+    }
+
+    db.prepare(`
+      UPDATE orders SET receipt_filename = ?, status = 'proof_uploaded' WHERE order_ref = ?
+    `).run(receiptFilename, req.params.orderRef);
+
+    res.json({ success: true, orderRef: order.order_ref });
+  } catch (err) {
+    console.error('Checkout step3 POST error:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

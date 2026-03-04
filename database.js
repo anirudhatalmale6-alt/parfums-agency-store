@@ -478,6 +478,27 @@ async function initDatabase() {
     );
   `);
 
+  // Shipping Companies table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS shipping_companies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      logo_filename TEXT DEFAULT '',
+      payment_mode TEXT DEFAULT 'full',
+      advance_amount REAL DEFAULT 0,
+      delivery_fee REAL DEFAULT 0,
+      delivery_time TEXT DEFAULT '',
+      description TEXT DEFAULT '',
+      is_active INTEGER DEFAULT 1,
+      sort_order INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+  `);
+
+  // Orders: shipping_company_id column
+  addColumnIfNotExists('orders', 'shipping_company_id', "ALTER TABLE orders ADD COLUMN shipping_company_id INTEGER DEFAULT NULL");
+  addColumnIfNotExists('orders', 'shipping_company_name', "ALTER TABLE orders ADD COLUMN shipping_company_name TEXT DEFAULT ''");
+
   // Custom Pages table
   db.exec(`
     CREATE TABLE IF NOT EXISTS custom_pages (

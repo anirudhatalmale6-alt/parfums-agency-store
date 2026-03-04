@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <title>الدفع — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: empty spacer -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <!-- Right: Home (always right) -->
+        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
+          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="الرئيسية">🏠</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Step 3: Bank Payment Page -->
+  <div class="checkout-page">
+    <div class="container">
+
+      <!-- Step Indicator -->
+      <div class="step-indicator">
+        <div class="step-indicator__step step-indicator__step--done">
+          <div class="step-indicator__circle step-indicator__circle--done">✓</div>
+          <div class="step-indicator__label">معلومات الطلب</div>
+        </div>
+        <div class="step-indicator__line step-indicator__line--done"></div>
+        <div class="step-indicator__step step-indicator__step--done">
+          <div class="step-indicator__circle step-indicator__circle--done">✓</div>
+          <div class="step-indicator__label">تأكيد الطلب</div>
+        </div>
+        <div class="step-indicator__line step-indicator__line--done"></div>
+        <div class="step-indicator__step step-indicator__step--active">
+          <div class="step-indicator__circle step-indicator__circle--active">3</div>
+          <div class="step-indicator__label">الدفع</div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="step3-content">
+
+        <!-- 1. Amount to Pay Card -->
+        <div class="step3-amount-card">
+          <div class="step3-amount-card__label">المبلغ المطلوب تحويله</div>
+          <div class="step3-amount-card__value"><%= order.payment_amount %> د.م</div>
+          <% if (order.payment_type === 'bank_deposit' && order.remaining_amount > 0) { %>
+            <div class="step3-amount-card__remaining">
+              المتبقي عند الاستلام: <strong><%= order.remaining_amount %> د.م</strong>
+            </div>
+          <% } %>
+          <div class="step3-amount-card__ref">
+            <span class="step3-amount-card__ref-badge">#<%= orderRef %></span>
+          </div>
+        </div>
+
+        <!-- 2. Bank Details Section -->
+        <div class="form-section">
+          <h2 class="form-section__title">
+            <span class="form-section__title-icon">🏦</span>
+            معلومات الحساب البنكي
+          </h2>
+
+          <div class="bank-details">
+            <% if (typeof bankSettings !== 'undefined' && bankSettings && bankSettings.length > 0) { %>
+              <% bankSettings.forEach(function(bank, idx) { %>
+                <% if (idx > 0) { %>
+                  <div style="border-top: 2px solid var(--color-border-light); margin: 16px 0;"></div>
+                <% } %>
+                <div class="bank-detail">
+                  <span class="bank-detail__label">اسم البنك</span>
+                  <span class="bank-detail__value"><%= bank.bank_name %></span>
+                </div>
+                <div class="bank-detail">
+                  <span class="bank-detail__label">صاحب الحساب</span>
+                  <span class="bank-detail__value">
+                    <%= bank.account_holder %>
+                    <button type="button" class="bank-detail__copy" data-value="<%= bank.account_holder %>" title="نسخ">📋</button>
+                  </span>
+                </div>
+                <div class="bank-detail">
+                  <span class="bank-detail__label">رقم الحساب (RIB)</span>
+                  <span class="bank-detail__value">
+                    <%= bank.rib %>
+                    <button type="button" class="bank-detail__copy" data-value="<%= bank.rib.replace(/\s/g, '') %>" title="نسخ">📋</button>
+                  </span>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="bank-detail">
+                <span class="bank-detail__label">اسم البنك</span>
+                <span class="bank-detail__value">CIH Bank</span>
+              </div>
+              <div class="bank-detail">
+                <span class="bank-detail__label">صاحب الحساب</span>
+                <span class="bank-detail__value">
+                  متجرنا SARL
+                  <button type="button" class="bank-detail__copy" data-value="متجرنا SARL" title="نسخ">📋</button>
+                </span>
+              </div>
+              <div class="bank-detail">
+                <span class="bank-detail__label">رقم الحساب (RIB)</span>
+                <span class="bank-detail__value">
+                  230 780 0118274000 68 30
+                  <button type="button" class="bank-detail__copy" data-value="230780011827400006830" title="نسخ">📋</button>
+                </span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- 3. Receipt Upload Section -->
+        <div class="form-section">
+          <h2 class="form-section__title">
+            <span class="form-section__title-icon">📤</span>
+            رفع إيصال الدفع
+          </h2>
+
+          <div class="form-group">
+            <div class="upload-zone" id="uploadZone">
+              <div class="upload-zone__icon">📤</div>
+              <div class="upload-zone__text">اضغط لرفع صورة إيصال الدفع</div>
+              <div class="upload-zone__hint">JPG, PNG, PDF — Max 10MB</div>
+              <input type="file" id="receiptUpload" name="receipt" accept="image/*,.pdf">
+            </div>
+            <div class="upload-preview" id="uploadPreview">
+              <img class="upload-preview__img" id="uploadPreviewImg" src="" alt="معاينة الإيصال" style="display:none;">
+              <div class="upload-preview__name" id="uploadPreviewName"></div>
+              <button type="button" class="upload-preview__remove" id="uploadPreviewRemove">✕</button>
+            </div>
+            <div class="form-error" id="receiptError">يرجى رفع صورة إيصال الدفع</div>
+          </div>
+        </div>
+
+        <!-- 4. Submit Button -->
+        <button type="button" class="btn btn--primary btn--lg btn--full" id="submitPaymentBtn">
+          ✅ تأكيد الدفع
+        </button>
+
+      </div><!-- /.step3-content -->
+
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">جاري إرسال إيصال الدفع...</div>
+  </div>
+
+  <%- include('partials/footer') %>
+
+  <style>
+    /* Step Indicator */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 24px auto 32px;
+      max-width: 480px;
+      direction: ltr;
+    }
+    .step-indicator__step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .step-indicator__circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      border: 2px solid var(--color-border);
+      background: var(--color-card);
+      color: var(--color-text-muted);
+      transition: all 0.3s ease;
+    }
+    .step-indicator__circle--done {
+      background: var(--color-primary, #000);
+      border-color: var(--color-primary, #000);
+      color: var(--color-button-text, #fff);
+    }
+    .step-indicator__circle--active {
+      border-color: var(--color-primary, #000);
+      color: var(--color-primary, #000);
+      background: var(--color-card);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+    }
+    .step-indicator__label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+    .step-indicator__step--done .step-indicator__label {
+      color: var(--color-primary, #000);
+    }
+    .step-indicator__step--active .step-indicator__label {
+      color: var(--color-primary, #000);
+      font-weight: 700;
+    }
+    .step-indicator__line {
+      flex: 1;
+      height: 2px;
+      background: var(--color-border);
+      min-width: 40px;
+      margin: 0 8px;
+      margin-bottom: 28px;
+    }
+    .step-indicator__line--done {
+      background: var(--color-primary, #000);
+    }
+
+    /* Step 3 Content */
+    .step3-content {
+      max-width: 600px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+
+    /* Amount Card */
+    .step3-amount-card {
+      background: var(--color-card);
+      border-radius: var(--radius-lg, 16px);
+      padding: 28px 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      border: 2px solid var(--color-primary, #000);
+      position: relative;
+      overflow: hidden;
+    }
+    .step3-amount-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--color-primary, #000), var(--color-primary-dark, #333));
+    }
+    .step3-amount-card__label {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .step3-amount-card__value {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--color-primary, #000);
+      margin-bottom: 8px;
+      letter-spacing: -0.5px;
+    }
+    .step3-amount-card__remaining {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+      padding: 8px 16px;
+      background: var(--color-bg-warm, #f9f9f9);
+      border-radius: var(--radius-md, 12px);
+      display: inline-block;
+    }
+    .step3-amount-card__ref {
+      margin-top: 12px;
+    }
+    .step3-amount-card__ref-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      background: var(--color-bg-warm, #f5f5f5);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.5px;
+      direction: ltr;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .step3-content {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .step3-amount-card__value {
+        font-size: 28px;
+      }
+      .step-indicator {
+        margin: 16px auto 24px;
+      }
+      .step-indicator__circle {
+        width: 32px;
+        height: 32px;
+        font-size: 12px;
+      }
+      .step-indicator__label {
+        font-size: 11px;
+      }
+      .step-indicator__line {
+        min-width: 24px;
+      }
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+
+  <script>
+  (function() {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function() {
+
+      var uploadInput = document.getElementById('receiptUpload');
+      var uploadZone = document.getElementById('uploadZone');
+      var uploadPreview = document.getElementById('uploadPreview');
+      var uploadPreviewImg = document.getElementById('uploadPreviewImg');
+      var uploadPreviewName = document.getElementById('uploadPreviewName');
+      var uploadPreviewRemove = document.getElementById('uploadPreviewRemove');
+      var submitBtn = document.getElementById('submitPaymentBtn');
+      var loadingOverlay = document.getElementById('loadingOverlay');
+      var receiptError = document.getElementById('receiptError');
+
+      var isSubmitting = false;
+      var selectedFile = null;
+
+      // Copy buttons
+      document.querySelectorAll('.bank-detail__copy').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var value = btn.dataset.value;
+          if (!value) return;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(value).then(function() {
+              showCopySuccess(btn);
+            }).catch(function() {
+              fallbackCopy(value, btn);
+            });
+          } else {
+            fallbackCopy(value, btn);
+          }
+        });
+      });
+
+      function fallbackCopy(value, btn) {
+        var ta = document.createElement('textarea');
+        ta.value = value;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch(e) {}
+        document.body.removeChild(ta);
+        showCopySuccess(btn);
+      }
+
+      function showCopySuccess(btn) {
+        var original = btn.textContent;
+        btn.textContent = '✓';
+        btn.style.background = 'var(--color-success, #2e7d32)';
+        btn.style.color = 'white';
+        setTimeout(function() {
+          btn.textContent = original;
+          btn.style.background = '';
+          btn.style.color = '';
+        }, 1500);
+      }
+
+      // Receipt upload
+      if (uploadInput) {
+        uploadInput.addEventListener('change', function(e) {
+          var file = e.target.files[0];
+          if (!file) return;
+
+          var validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+          if (validTypes.indexOf(file.type) === -1) {
+            showToast('يرجى اختيار صورة أو ملف PDF', 'error');
+            uploadInput.value = '';
+            return;
+          }
+          if (file.size > 10 * 1024 * 1024) {
+            showToast('حجم الملف كبير جداً (الحد الأقصى 10 ميغابايت)', 'error');
+            uploadInput.value = '';
+            return;
+          }
+
+          selectedFile = file;
+
+          if (uploadZone) {
+            uploadZone.classList.remove('upload-zone--error');
+            uploadZone.classList.add('upload-zone--has-file');
+          }
+          if (receiptError) receiptError.classList.remove('visible');
+
+          if (file.type.startsWith('image/')) {
+            var reader = new FileReader();
+            reader.onload = function(evt) {
+              if (uploadPreviewImg) {
+                uploadPreviewImg.src = evt.target.result;
+                uploadPreviewImg.style.display = 'block';
+              }
+            };
+            reader.readAsDataURL(file);
+          } else {
+            if (uploadPreviewImg) uploadPreviewImg.style.display = 'none';
+          }
+
+          if (uploadPreviewName) uploadPreviewName.textContent = '✅ ' + file.name;
+          if (uploadPreview) uploadPreview.classList.add('visible');
+          if (uploadZone) {
+            var zoneText = uploadZone.querySelector('.upload-zone__text');
+            var zoneIcon = uploadZone.querySelector('.upload-zone__icon');
+            if (zoneText) zoneText.textContent = 'تم اختيار الملف';
+            if (zoneIcon) zoneIcon.textContent = '✅';
+          }
+        });
+      }
+
+      // Remove uploaded file
+      if (uploadPreviewRemove) {
+        uploadPreviewRemove.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          selectedFile = null;
+          if (uploadInput) uploadInput.value = '';
+          if (uploadPreview) uploadPreview.classList.remove('visible');
+          if (uploadPreviewImg) { uploadPreviewImg.src = ''; uploadPreviewImg.style.display = 'none'; }
+          if (uploadZone) {
+            uploadZone.classList.remove('upload-zone--has-file');
+            var zoneText = uploadZone.querySelector('.upload-zone__text');
+            var zoneIcon = uploadZone.querySelector('.upload-zone__icon');
+            if (zoneText) zoneText.textContent = 'اضغط لرفع صورة إيصال الدفع';
+            if (zoneIcon) zoneIcon.textContent = '📤';
+          }
+        });
+      }
+
+      // Submit payment
+      if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+          if (isSubmitting) return;
+
+          // Clear errors
+          if (uploadZone) uploadZone.classList.remove('upload-zone--error');
+          if (receiptError) receiptError.classList.remove('visible');
+
+          // Validate receipt
+          var receiptFile = uploadInput && uploadInput.files && uploadInput.files[0];
+          if (!receiptFile) {
+            if (uploadZone) uploadZone.classList.add('upload-zone--error');
+            if (receiptError) { receiptError.textContent = '⚠️ يرجى رفع صورة إيصال الدفع'; receiptError.classList.add('visible'); }
+            if (typeof showToast === 'function') showToast('يرجى رفع إيصال الدفع', 'error');
+            return;
+          }
+
+          isSubmitting = true;
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><svg style="animation:spin 1s linear infinite;width:20px;height:20px;" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="31.4 31.4" stroke-dashoffset="10"/></svg> جاري الإرسال...</span>';
+
+          if (loadingOverlay) loadingOverlay.classList.add('visible');
+
+          var formData = new FormData();
+          formData.append('receipt', receiptFile);
+
+          fetch('/checkout/step3/<%= orderRef %>', {
+            method: 'POST',
+            body: formData
+          })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (data.success) {
+              sessionStorage.setItem('orderRef', '<%= orderRef %>');
+              sessionStorage.setItem('customerName', data.customerName || '');
+              window.location.href = '/thankyou';
+            } else {
+              hideLoading();
+              resetSubmitBtn();
+              if (typeof showToast === 'function') {
+                showToast(data.error || 'حدث خطأ، يرجى المحاولة مرة أخرى', 'error');
+              }
+            }
+          })
+          .catch(function(err) {
+            hideLoading();
+            resetSubmitBtn();
+            console.error('Payment upload error:', err);
+            if (typeof showToast === 'function') {
+              showToast('خطأ في الاتصال، يرجى المحاولة مرة أخرى', 'error');
+            }
+          });
+        });
+      }
+
+      function resetSubmitBtn() {
+        isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '✅ تأكيد الدفع';
+        }
+      }
+
+      function hideLoading() {
+        if (loadingOverlay) loadingOverlay.classList.remove('visible');
+      }
+
+    });
+  })();
+  </script>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

@@ -126,6 +126,18 @@ const bannerStorage = multer.diskStorage({
 });
 const bannerUpload = multer({ storage: bannerStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 
+// Shipping company logo upload
+const shippingLogoDir = path.join(__dirname, '..', 'public', 'uploads', 'shipping');
+if (!fs.existsSync(shippingLogoDir)) fs.mkdirSync(shippingLogoDir, { recursive: true });
+const shippingStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '..', 'public', 'uploads', 'shipping')),
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, 'shipping-' + Date.now() + '-' + Math.random().toString(36).substring(7) + ext);
+  }
+});
+const shippingUpload = multer({ storage: shippingStorage, limits: { fileSize: 5 * 1024 * 1024 } });
+
 // ============================================================
 // AUTH ROUTES
 // ============================================================
@@ -591,6 +603,42 @@ router.post('/settings/bank/:id/update', requireAdmin, (req, res) => {
 router.post('/settings/bank/:id/delete', requireAdmin, (req, res) => {
   db.prepare('DELETE FROM bank_transfer_settings WHERE id = ?').run(req.params.id);
   res.redirect('/admin/settings/bank');
+});
+
+// ============================================================
+// SHIPPING COMPANIES
+// ============================================================
+
+router.get('/shipping-companies', requireAdmin, (req, res) => {
+  const companies = db.prepare('SELECT * FROM shipping_companies ORDER BY sort_order, id').all();
+  res.render('admin/shipping-companies', { companies });
+});
+
+router.post('/shipping-companies', requireAdmin, shippingUpload.single('logo'), (req, res) => {
+  const { name, payment_mode, advance_amount, delivery_fee, delivery_time, description } = req.body;
+  const logoFilename = req.file ? req.file.filename : '';
+  if (name) {
+    const maxOrder = db.prepare('SELECT COALESCE(MAX(sort_order), -1) as max_order FROM shipping_companies').get();
+    const sortOrder = (maxOrder ? maxOrder.max_order : -1) + 1;
+    db.prepare('INSERT INTO shipping_companies (name, logo_filename, payment_mode, advance_amount, delivery_fee, delivery_time, description, is_active, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)').run(name, logoFilename, payment_mode || '', parseFloat(advance_amount) || 0, parseFloat(delivery_fee) || 0, delivery_time || '', description || '', sortOrder);
+  }
+  res.redirect('/admin/shipping-companies');
+});
+
+router.post('/shipping-companies/:id/update', requireAdmin, (req, res) => {
+  const { is_active } = req.body;
+  db.prepare('UPDATE shipping_companies SET is_active=? WHERE id=?').run(is_active === '1' ? 1 : 0, req.params.id);
+  res.redirect('/admin/shipping-companies');
+});
+
+router.post('/shipping-companies/:id/delete', requireAdmin, (req, res) => {
+  const company = db.prepare('SELECT * FROM shipping_companies WHERE id = ?').get(req.params.id);
+  if (company && company.logo_filename) {
+    const filePath = path.join(__dirname, '..', 'public', 'uploads', 'shipping', company.logo_filename);
+    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch(e) {}
+  }
+  db.prepare('DELETE FROM shipping_companies WHERE id = ?').run(req.params.id);
+  res.redirect('/admin/shipping-companies');
 });
 
 // ============================================================

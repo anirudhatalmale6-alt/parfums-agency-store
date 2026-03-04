@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>اعدادات التحويل البنكي — لوحة التحكم</title>
-                <li><a href="/admin/shipping-companies"><svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>شركات التوصيل</a></li>
+    <title>شركات التوصيل — لوحة التحكم</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,18 +34,25 @@
         .form-card h3 { font-size: 18px; color: #6B5335; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f0ebe5; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; font-size: 14px; font-weight: 700; color: #555; margin-bottom: 8px; }
-        .form-group input[type="text"] { width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; transition: border-color 0.2s; }
-        .form-group input:focus { outline: none; border-color: #8B6F47; }
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="file"],
+        .form-group select { width: 100%; padding: 12px 16px; border: 2px solid #e8e0d8; border-radius: 10px; font-family: 'Cairo', sans-serif; font-size: 14px; color: #333; transition: border-color 0.2s; background: #fff; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #8B6F47; }
         .form-group .hint { font-size: 12px; color: #aaa; margin-top: 6px; }
         .bank-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); padding: 24px; margin-bottom: 16px; max-width: 700px; }
         .bank-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-        .bank-card-header h4 { font-size: 16px; color: #333; font-weight: 700; }
+        .bank-card-header h4 { font-size: 16px; color: #333; font-weight: 700; display: flex; align-items: center; gap: 12px; }
+        .bank-card-header h4 img { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; border: 1px solid #e8e0d8; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
         .badge-active { background: #e8f5e9; color: #2e7d32; }
         .badge-inactive { background: #ffebee; color: #c62828; }
+        .badge-full { background: #e3f2fd; color: #1565c0; }
+        .badge-advance { background: #fff3e0; color: #e65100; }
         .bank-detail { font-size: 14px; color: #666; margin-bottom: 6px; }
         .bank-detail strong { color: #333; }
         .bank-actions { display: flex; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #f0ebe5; flex-wrap: wrap; }
+        .badges-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .mobile-toggle { display: none; position: fixed; top: 16px; right: 16px; z-index: 200; background: #6B5335; color: #fff; border: none; border-radius: 10px; width: 44px; height: 44px; font-size: 20px; cursor: pointer; }
         .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 90; }
         @media (max-width: 768px) {
@@ -81,67 +87,124 @@
                 <li><a href="/admin/users"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>المسوقين</a></li>
                 <li><a href="/admin/withdrawals"><svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>طلبات السحب</a></li>
                 <div class="sidebar-divider"></div>
-                <li><a href="/admin/settings/bank" class="active"><svg viewBox="0 0 24 24"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"/></svg>التحويل البنكي</a></li>
-                <li><a href="/admin/shipping-companies"><svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>شركات التوصيل</a></li>
+                <li><a href="/admin/shipping-companies" class="active"><svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>شركات التوصيل</a></li>
+                <li><a href="/admin/settings/bank"><svg viewBox="0 0 24 24"><path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zM2 22h19v-3H2v3zm14-12v7h3v-7h-3zm-4.5-9L2 6v2h19V6l-9.5-5z"/></svg>التحويل البنكي</a></li>
                 <li><a href="/admin/settings"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>الاعدادات</a></li>
             </ul>
             <div class="sidebar-footer"><a href="/admin/logout"><svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>تسجيل الخروج</a></div>
         </aside>
 
         <main class="main-content">
-            <h1 class="page-title">اعدادات التحويل البنكي</h1>
-                <li><a href="/admin/shipping-companies"><svg viewBox="0 0 24 24"><path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>شركات التوصيل</a></li>
+            <h1 class="page-title">شركات التوصيل</h1>
 
-            <!-- Add New Bank -->
+            <!-- Add New Shipping Company -->
             <div class="form-card">
-                <h3>اضافة حساب بنكي جديد</h3>
-                <form method="POST" action="/admin/settings/bank">
+                <h3>اضافة شركة توصيل جديدة</h3>
+                <form method="POST" action="/admin/shipping-companies" enctype="multipart/form-data">
                     <div class="form-group">
-                        <label>اسم البنك *</label>
-                        <input type="text" name="bank_name" placeholder="مثلا: CIH Bank" required>
+                        <label>اسم الشركة *</label>
+                        <input type="text" name="name" placeholder="مثلا: أمانة اكسبريس" required>
                     </div>
                     <div class="form-group">
-                        <label>اسم صاحب الحساب *</label>
-                        <input type="text" name="account_holder" placeholder="الاسم الكامل" required>
+                        <label>لوغو الشركة</label>
+                        <input type="file" name="logo" accept="image/*">
+                        <div class="hint">اختياري — صيغة PNG أو JPG</div>
                     </div>
                     <div class="form-group">
-                        <label>رقم الحساب (RIB) *</label>
-                        <input type="text" name="rib" placeholder="رقم الحساب البنكي" required dir="ltr" style="text-align:left;">
+                        <label>نظام الدفع *</label>
+                        <select name="payment_mode" id="paymentMode" required>
+                            <option value="full">دفع كامل</option>
+                            <option value="advance">تسبيق فقط</option>
+                        </select>
                     </div>
-                    <button type="submit" class="btn btn-primary">+ اضافة حساب</button>
+                    <div class="form-group" id="advanceAmountGroup" style="display:none;">
+                        <label>مبلغ التسبيق (درهم) *</label>
+                        <input type="number" name="advance_amount" id="advanceAmount" placeholder="0.00" min="0" step="0.01">
+                        <div class="hint">المبلغ الذي يدفعه العميل مقدما</div>
+                    </div>
+                    <div class="form-group">
+                        <label>رسوم التوصيل (درهم) *</label>
+                        <input type="number" name="delivery_fee" placeholder="0.00" min="0" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label>مدة التوصيل *</label>
+                        <input type="text" name="delivery_time" placeholder="مثلا: 2-3 أيام" required>
+                    </div>
+                    <div class="form-group">
+                        <label>وصف</label>
+                        <input type="text" name="description" placeholder="وصف مختصر (اختياري)">
+                    </div>
+                    <button type="submit" class="btn btn-primary">+ اضافة شركة</button>
                 </form>
             </div>
 
-            <!-- Existing Banks -->
-            <% if (banks && banks.length > 0) { %>
-                <% banks.forEach(function(bank) { %>
+            <!-- Existing Shipping Companies -->
+            <% if (companies && companies.length > 0) { %>
+                <% companies.forEach(function(company) { %>
                     <div class="bank-card">
                         <div class="bank-card-header">
-                            <h4><%= bank.bank_name %></h4>
-                            <span class="badge <%= bank.is_active ? 'badge-active' : 'badge-inactive' %>"><%= bank.is_active ? 'نشط' : 'غير نشط' %></span>
+                            <h4>
+                                <% if (company.logo) { %>
+                                    <img src="<%= company.logo %>" alt="<%= company.name %>">
+                                <% } %>
+                                <%= company.name %>
+                            </h4>
+                            <div class="badges-row">
+                                <span class="badge <%= company.payment_mode === 'full' ? 'badge-full' : 'badge-advance' %>">
+                                    <%= company.payment_mode === 'full' ? 'كامل' : 'تسبيق' %>
+                                </span>
+                                <span class="badge <%= company.is_active ? 'badge-active' : 'badge-inactive' %>">
+                                    <%= company.is_active ? 'نشط' : 'غير نشط' %>
+                                </span>
+                            </div>
                         </div>
-                        <div class="bank-detail"><strong>صاحب الحساب:</strong> <%= bank.account_holder %></div>
-                        <div class="bank-detail"><strong>RIB:</strong> <span dir="ltr"><%= bank.rib %></span></div>
+                        <% if (company.payment_mode === 'advance' && company.advance_amount) { %>
+                            <div class="bank-detail"><strong>مبلغ التسبيق:</strong> <%= company.advance_amount %> درهم</div>
+                        <% } %>
+                        <div class="bank-detail"><strong>رسوم التوصيل:</strong> <%= company.delivery_fee %> درهم</div>
+                        <div class="bank-detail"><strong>مدة التوصيل:</strong> <%= company.delivery_time %></div>
+                        <% if (company.description) { %>
+                            <div class="bank-detail"><strong>وصف:</strong> <%= company.description %></div>
+                        <% } %>
                         <div class="bank-actions">
-                            <form method="POST" action="/admin/settings/bank/<%= bank.id %>/update" style="display:inline-flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                                <input type="hidden" name="bank_name" value="<%= bank.bank_name %>">
-                                <input type="hidden" name="account_holder" value="<%= bank.account_holder %>">
-                                <input type="hidden" name="rib" value="<%= bank.rib %>">
-                                <input type="hidden" name="is_active" value="<%= bank.is_active ? '0' : '1' %>">
-                                <button type="submit" class="btn btn-sm" style="background: <%= bank.is_active ? '#fff3e0' : '#e8f5e9' %>; color: <%= bank.is_active ? '#e65100' : '#2e7d32' %>;">
-                                    <%= bank.is_active ? 'تعطيل' : 'تفعيل' %>
+                            <form method="POST" action="/admin/shipping-companies/<%= company.id %>/update" style="display:inline;">
+                                <input type="hidden" name="is_active" value="<%= company.is_active ? '0' : '1' %>">
+                                <button type="submit" class="btn btn-sm" style="background: <%= company.is_active ? '#fff3e0' : '#e8f5e9' %>; color: <%= company.is_active ? '#e65100' : '#2e7d32' %>;">
+                                    <%= company.is_active ? 'تعطيل' : 'تفعيل' %>
                                 </button>
                             </form>
-                            <form method="POST" action="/admin/settings/bank/<%= bank.id %>/delete" style="display:inline;" onclick="return confirm('هل تريد حذف هذا الحساب البنكي؟')">
+                            <form method="POST" action="/admin/shipping-companies/<%= company.id %>/delete" style="display:inline;" onsubmit="return confirm('هل تريد حذف هذه الشركة؟')">
                                 <button type="submit" class="btn btn-delete btn-sm">حذف</button>
                             </form>
                         </div>
                     </div>
                 <% }); %>
             <% } else { %>
-                <div class="form-card" style="text-align:center; color:#aaa;">لا توجد حسابات بنكية</div>
+                <div class="form-card" style="text-align:center; color:#aaa;">لا توجد شركات توصيل</div>
             <% } %>
         </main>
     </div>
+
+    <script>
+        // Show/hide advance amount field based on payment mode selection
+        var paymentMode = document.getElementById('paymentMode');
+        var advanceGroup = document.getElementById('advanceAmountGroup');
+        var advanceInput = document.getElementById('advanceAmount');
+
+        function toggleAdvanceAmount() {
+            if (paymentMode.value === 'advance') {
+                advanceGroup.style.display = 'block';
+                advanceInput.required = true;
+            } else {
+                advanceGroup.style.display = 'none';
+                advanceInput.required = false;
+                advanceInput.value = '';
+            }
+        }
+
+        paymentMode.addEventListener('change', toggleAdvanceAmount);
+        // Run on page load in case of pre-selected value
+        toggleAdvanceAmount();
+    </script>
 </body>
 </html>

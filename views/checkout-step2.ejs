@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="<%= typeof lang !== 'undefined' ? lang : 'ar' %>" dir="<%= typeof dir !== 'undefined' ? dir : 'rtl' %>">
+<head>
+  <%- include('partials/head') %>
+  <title>تأكيد الطلب — <%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></title>
+  <style>
+    .step2-page {
+      padding: 100px 16px 40px;
+      min-height: 100vh;
+    }
+    .step2-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Step Indicator */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: 32px;
+      direction: ltr;
+    }
+    .step-indicator__step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .step-indicator__circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      border: 2px solid var(--color-border, #ddd);
+      background: var(--color-bg, #fff);
+      color: var(--color-text-muted, #999);
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+    .step-indicator__circle--done {
+      background: var(--color-button, #000);
+      color: var(--color-button-text, #fff);
+      border-color: var(--color-button, #000);
+    }
+    .step-indicator__circle--active {
+      background: var(--color-button, #000);
+      color: var(--color-button-text, #fff);
+      border-color: var(--color-button, #000);
+      box-shadow: 0 0 0 4px rgba(0,0,0,0.1);
+    }
+    .step-indicator__label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-muted, #999);
+      margin-top: 6px;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .step-indicator__label--done {
+      color: var(--color-text, #000);
+    }
+    .step-indicator__label--active {
+      color: var(--color-text, #000);
+      font-weight: 700;
+    }
+    .step-indicator__line {
+      width: 48px;
+      height: 2px;
+      background: var(--color-border, #ddd);
+      margin: 0 8px;
+      flex-shrink: 0;
+    }
+    .step-indicator__line--done {
+      background: var(--color-button, #000);
+    }
+
+    /* Success header */
+    .step2-success {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .step2-success__icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: #e8f5e9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .step2-success__icon svg {
+      width: 40px;
+      height: 40px;
+    }
+    .step2-success__title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--color-text, #000);
+      margin: 0 0 8px;
+    }
+    .step2-success__ref {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--color-primary, #000);
+      direction: ltr;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .step2-success__badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    /* Order details card */
+    .step2-card {
+      background: var(--color-card, #fff);
+      border: 1px solid var(--color-border, #e5e5e5);
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .step2-card__section {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--color-border-light, #f0f0f0);
+    }
+    .step2-card__section:last-child {
+      border-bottom: none;
+    }
+    .step2-card__section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-text-muted, #888);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0 0 10px;
+    }
+    .step2-card__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 6px 0;
+      gap: 12px;
+    }
+    .step2-card__label {
+      font-size: 14px;
+      color: var(--color-text-secondary, #666);
+      flex-shrink: 0;
+    }
+    .step2-card__value {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text, #000);
+      text-align: left;
+      direction: ltr;
+    }
+    .step2-card__value--rtl {
+      text-align: right;
+      direction: rtl;
+    }
+
+    /* Product row */
+    .step2-product {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 4px 0;
+    }
+    .step2-product__img {
+      width: 64px;
+      height: 64px;
+      border-radius: 10px;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid var(--color-border-light, #f0f0f0);
+    }
+    .step2-product__img-placeholder {
+      width: 64px;
+      height: 64px;
+      border-radius: 10px;
+      background: var(--color-bg-warm, #f5f5f5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      flex-shrink: 0;
+    }
+    .step2-product__info {
+      flex: 1;
+      min-width: 0;
+    }
+    .step2-product__title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text, #000);
+      margin: 0 0 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .step2-product__meta {
+      font-size: 13px;
+      color: var(--color-text-secondary, #666);
+    }
+
+    /* Shipping row */
+    .step2-shipping {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 0;
+    }
+    .step2-shipping__logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      object-fit: contain;
+      flex-shrink: 0;
+      background: var(--color-bg-warm, #f5f5f5);
+      padding: 4px;
+    }
+    .step2-shipping__info {
+      flex: 1;
+      min-width: 0;
+    }
+    .step2-shipping__name {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text, #000);
+      margin: 0 0 2px;
+    }
+    .step2-shipping__time {
+      font-size: 13px;
+      color: var(--color-text-secondary, #666);
+    }
+
+    /* Payment info */
+    .step2-payment-info {
+      background: var(--color-bg-warm, #f8f8f8);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--color-text, #000);
+    }
+    .step2-payment-info strong {
+      color: var(--color-primary, #000);
+    }
+
+    /* CTA button */
+    .step2-cta {
+      display: block;
+      width: 100%;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, var(--color-button, #000), var(--color-button, #000));
+      color: var(--color-button-text, #fff);
+      text-decoration: none;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      transition: box-shadow 0.3s ease, transform 0.2s ease;
+      margin-bottom: 12px;
+    }
+    .step2-cta:hover {
+      box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+      transform: translateY(-1px);
+    }
+    .step2-cta:active {
+      transform: translateY(0);
+    }
+    .step2-helper {
+      text-align: center;
+      font-size: 14px;
+      color: var(--color-text-secondary, #666);
+      margin-bottom: 32px;
+    }
+
+    /* Variation info */
+    .step2-variation-tag {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--color-text-muted, #888);
+      background: var(--color-bg-warm, #f0f0f0);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-top: 2px;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .step2-page { padding: 88px 12px 32px; }
+      .step-indicator__line { width: 28px; margin: 0 4px; }
+      .step-indicator__label { font-size: 11px; }
+      .step-indicator__circle { width: 32px; height: 32px; font-size: 13px; }
+      .step2-success__title { font-size: 20px; }
+      .step2-success__ref { font-size: 16px; }
+      .step2-card__section { padding: 14px 16px; }
+      .step2-cta { font-size: 16px; padding: 14px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="pattern-overlay"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar scrolled">
+    <div class="container">
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: empty spacer -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <!-- Right: Home (always right) -->
+        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
+          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('home') %>">🏠</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Step 2: Order Confirmation -->
+  <div class="step2-page">
+    <div class="step2-container">
+
+      <!-- Step Indicator: 1(done) → 2(active) → 3(pending) -->
+      <div class="step-indicator">
+        <!-- Step 1: Done -->
+        <div class="step-indicator__step">
+          <div class="step-indicator__circle step-indicator__circle--done">✓</div>
+          <div class="step-indicator__label step-indicator__label--done">معلومات الطلب</div>
+        </div>
+        <div class="step-indicator__line step-indicator__line--done"></div>
+        <!-- Step 2: Active -->
+        <div class="step-indicator__step">
+          <div class="step-indicator__circle step-indicator__circle--active">2</div>
+          <div class="step-indicator__label step-indicator__label--active">تأكيد الطلب</div>
+        </div>
+        <div class="step-indicator__line"></div>
+        <!-- Step 3: Pending -->
+        <div class="step-indicator__step">
+          <div class="step-indicator__circle">3</div>
+          <div class="step-indicator__label">الدفع</div>
+        </div>
+      </div>
+
+      <!-- Success Header -->
+      <div class="step2-success">
+        <div class="step2-success__icon">
+          <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="24" cy="24" r="22" fill="#4caf50"/>
+            <path d="M14 24.5L21 31.5L34 18.5" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="step2-success__title">تم إنشاء طلبك بنجاح</h1>
+        <div class="step2-success__ref">#<%= orderRef %></div>
+        <br>
+        <span class="step2-success__badge">في الانتظار</span>
+      </div>
+
+      <!-- Order Details Card -->
+      <div class="step2-card">
+
+        <!-- Customer Info -->
+        <div class="step2-card__section">
+          <div class="step2-card__section-title">معلومات العميل</div>
+          <div class="step2-card__row">
+            <span class="step2-card__label">الاسم</span>
+            <span class="step2-card__value step2-card__value--rtl"><%= order.full_name %></span>
+          </div>
+          <div class="step2-card__row">
+            <span class="step2-card__label">الهاتف</span>
+            <span class="step2-card__value"><%= order.phone %></span>
+          </div>
+          <% if (order.city) { %>
+          <div class="step2-card__row">
+            <span class="step2-card__label">المدينة</span>
+            <span class="step2-card__value step2-card__value--rtl"><%= order.city %></span>
+          </div>
+          <% } %>
+          <% if (order.address) { %>
+          <div class="step2-card__row">
+            <span class="step2-card__label">العنوان</span>
+            <span class="step2-card__value step2-card__value--rtl"><%= order.address %></span>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- Product Info -->
+        <div class="step2-card__section">
+          <div class="step2-card__section-title">المنتج</div>
+          <% if (typeof checkoutMode !== 'undefined' && checkoutMode === 'cart' && typeof cartItems !== 'undefined' && cartItems.length > 0) { %>
+            <% cartItems.forEach(function(item) { %>
+            <div class="step2-product" style="margin-bottom: 10px;">
+              <% if (item.main_image) { %>
+                <img class="step2-product__img" src="/uploads/products/<%= item.main_image %>" alt="<%= item.title %>">
+              <% } else { %>
+                <div class="step2-product__img-placeholder">🛍️</div>
+              <% } %>
+              <div class="step2-product__info">
+                <div class="step2-product__title"><%= item.title %></div>
+                <div class="step2-product__meta"><%= item.quantity %> &times; <%= item.unit_price %> <%= t('currency') %></div>
+              </div>
+            </div>
+            <% }); %>
+          <% } else { %>
+            <div class="step2-product">
+              <% if (product && product.main_image) { %>
+                <img class="step2-product__img" src="/uploads/products/<%= product.main_image %>" alt="<%= product.title %>">
+              <% } else { %>
+                <div class="step2-product__img-placeholder">🛍️</div>
+              <% } %>
+              <div class="step2-product__info">
+                <div class="step2-product__title"><%= product ? product.title : '' %></div>
+                <div class="step2-product__meta"><%= order.quantity %> &times; <%= order.unit_price %> <%= t('currency') %></div>
+                <% if (order.variation_info) { %>
+                  <span class="step2-variation-tag"><%= order.variation_info %></span>
+                <% } %>
+              </div>
+            </div>
+          <% } %>
+        </div>
+
+        <!-- Shipping Info -->
+        <% if (typeof shippingCompany !== 'undefined' && shippingCompany) { %>
+        <div class="step2-card__section">
+          <div class="step2-card__section-title">التوصيل</div>
+          <div class="step2-shipping">
+            <% if (shippingCompany.logo_filename) { %>
+              <img class="step2-shipping__logo" src="/uploads/shipping/<%= shippingCompany.logo_filename %>" alt="<%= shippingCompany.name %>">
+            <% } else { %>
+              <div class="step2-shipping__logo" style="display: flex; align-items: center; justify-content: center; font-size: 24px;">🚚</div>
+            <% } %>
+            <div class="step2-shipping__info">
+              <div class="step2-shipping__name"><%= shippingCompany.name %></div>
+              <% if (shippingCompany.delivery_time) { %>
+                <div class="step2-shipping__time">⏰ <%= shippingCompany.delivery_time %></div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+        <% } %>
+
+        <!-- Payment Summary -->
+        <div class="step2-card__section">
+          <div class="step2-card__section-title">ملخص الدفع</div>
+          <%
+            var paymentMode = (typeof shippingCompany !== 'undefined' && shippingCompany) ? shippingCompany.payment_mode : 'full';
+            var paymentAmount = order.payment_amount || order.total_price;
+            var remainingAmount = order.remaining_amount || 0;
+            var totalPrice = order.total_price;
+          %>
+          <div class="step2-payment-info">
+            <% if (paymentMode === 'advance') { %>
+              عربون: <strong><%= paymentAmount %> <%= t('currency') %></strong>
+              <br>
+              المتبقي عند الاستلام: <strong><%= remainingAmount %> <%= t('currency') %></strong>
+            <% } else { %>
+              المبلغ الكامل: <strong><%= totalPrice %> <%= t('currency') %></strong>
+              <% if (typeof shippingCompany !== 'undefined' && shippingCompany && shippingCompany.delivery_fee == 0) { %>
+                &mdash; توصيل مجاني
+              <% } %>
+            <% } %>
+          </div>
+
+          <!-- Total row -->
+          <div class="step2-card__row" style="margin-top: 12px; padding-top: 12px; border-top: 2px solid var(--color-border-light, #f0f0f0);">
+            <span class="step2-card__label" style="font-size: 15px; font-weight: 700; color: var(--color-text, #000);">المبلغ الإجمالي</span>
+            <span class="step2-card__value" style="font-size: 18px; font-weight: 800; color: var(--color-primary, #000);"><%= totalPrice %> <%= t('currency') %></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CTA: Pay via Bank Transfer -->
+      <a href="/checkout/step3/<%= orderRef %>" class="step2-cta" data-turbo="false">
+        💳 الدفع عبر التحويل البنكي
+      </a>
+      <p class="step2-helper">يرجى إتمام الدفع لتأكيد طلبك</p>
+
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+  <script src="/js/main.js"></script>
+</body>
+</html>
