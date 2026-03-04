@@ -263,7 +263,25 @@ router.get('/', (req, res) => {
   } catch (e) {}
   const useCollections = collections.length > 0;
 
-  res.render('home', { products, sliders, categories, banners, bannerInterval, latestReviews, homeReviewCount, showFeedbackSection, feedbackCollectionId, collections, useCollections });
+  // Build category groups for homepage display (products grouped by category)
+  let categoryGroups = [];
+  try {
+    if (categories.length > 0) {
+      categories.forEach(cat => {
+        const catProducts = db.prepare('SELECT * FROM products WHERE is_active = 1 AND category_id = ? ORDER BY created_at DESC').all(cat.id);
+        if (catProducts.length > 0) {
+          categoryGroups.push({ category: cat, products: catProducts });
+        }
+      });
+    }
+    // Also add uncategorized products if any
+    const uncatProducts = db.prepare('SELECT * FROM products WHERE is_active = 1 AND (category_id IS NULL OR category_id = 0) ORDER BY created_at DESC').all();
+    if (uncatProducts.length > 0) {
+      categoryGroups.push({ category: { name: null, slug: null }, products: uncatProducts });
+    }
+  } catch (e) {}
+
+  res.render('home', { products, sliders, categories, banners, bannerInterval, latestReviews, homeReviewCount, showFeedbackSection, feedbackCollectionId, collections, useCollections, categoryGroups });
 });
 
 
