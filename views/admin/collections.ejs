@@ -411,10 +411,100 @@
                 </div>
             </div>
 
-            <!-- Sections List -->
+            <!-- Logo Settings -->
+            <div style="background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 1px solid #e0e0e0;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+                    <div style="width: 32px; height: 32px; background: #e8f5e9; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#2e7d32"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
+                    </div>
+                    <div>
+                        <div style="font-size: 15px; font-weight: 700; color: #333;">Logo</div>
+                        <div style="font-size: 12px; color: #999;">اللوجو يظهر في وسط الهيدر</div>
+                    </div>
+                </div>
+                <form method="POST" action="/admin/settings/logo" enctype="multipart/form-data">
+                    <input type="hidden" name="_redirect" value="/admin/collections">
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 12px; color: #777; display: block; margin-bottom: 4px;">لوجو سطح المكتب</label>
+                            <input type="file" name="desktop_logo" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+                            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+                                <div style="margin-top: 8px;"><img src="/uploads/settings/<%= desktopLogo %>" alt="" style="max-height: 40px; border-radius: 6px; border: 1px solid #eee;"></div>
+                            <% } %>
+                        </div>
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 12px; color: #777; display: block; margin-bottom: 4px;">لوجو الموبايل (اختياري)</label>
+                            <input type="file" name="mobile_logo" accept="image/*" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+                            <% if (typeof mobileLogo !== 'undefined' && mobileLogo) { %>
+                                <div style="margin-top: 8px;"><img src="/uploads/settings/<%= mobileLogo %>" alt="" style="max-height: 30px; border-radius: 6px; border: 1px solid #eee;"></div>
+                            <% } %>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="font-size: 12px; color: #777; display: block; margin-bottom: 4px;">حجم اللوجو (px)</label>
+                        <input type="number" name="logo_size" id="logoSizeInput" value="<%= typeof logoSize !== 'undefined' ? logoSize : '36' %>" min="20" max="120" style="width: 120px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px;">
+                    </div>
+                    <button type="submit" style="width: 100%; padding: 10px; background: #333; color: #fff; border: none; border-radius: 8px; font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;">حفظ اللوجو</button>
+                </form>
+            </div>
+
+            <!-- Sections List (includes Categories as a draggable card) -->
             <div id="sectionsContainer">
+                <%
+                  var _catSortOrder = typeof categoriesSortOrder !== 'undefined' ? categoriesSortOrder : 0;
+                  var _catHidden = typeof categoriesHidden !== 'undefined' && categoriesHidden;
+                  var _catInserted = false;
+                %>
+                <% if (_catSortOrder <= 0 && !_catInserted) { _catInserted = true; %>
+                <!-- Categories (Circular) — Draggable Section -->
+                <div class="section-card" data-id="categories" draggable="true" style="border-left: 3px solid #1565c0;<%= _catHidden ? ' opacity: 0.6;' : '' %>">
+                    <div class="card-header">
+                        <div class="drag-handle" onclick="event.stopPropagation();" title="اسحب لتغيير الترتيب">
+                            <span></span><span></span><span></span><span></span><span></span><span></span>
+                        </div>
+                        <div class="card-type-icon products" style="background: #e3f2fd; color: #1565c0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg></div>
+                        <span class="card-type-label" style="color: #1565c0;">Categories</span>
+                        <span class="card-title">التصنيفات الدائرية</span>
+                        <div class="card-actions" onclick="event.stopPropagation();">
+                            <% if (_catHidden) { %>
+                                <span style="font-size:11px;color:#c62828;font-weight:600;background:#ffebee;padding:2px 8px;border-radius:4px;">Hidden</span>
+                            <% } %>
+                            <button type="button" class="card-action-btn" title="<%= _catHidden ? 'إظهار' : 'إخفاء' %>" onclick="toggleCategoriesVisibility(this)">
+                                <svg viewBox="0 0 24 24"><% if (!_catHidden) { %><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/><% } else { %><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/><% } %></svg>
+                            </button>
+                            <button type="button" class="card-action-btn danger" title="حذف" onclick="deleteCategoriesSection(this)">
+                                <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <% } %>
                 <% if (collections.length > 0) { %>
                     <% collections.forEach(function(col, idx) { %>
+                        <% if (!_catInserted && idx >= _catSortOrder) { _catInserted = true; %>
+                        <!-- Categories (Circular) — Draggable Section -->
+                        <div class="section-card" data-id="categories" draggable="true" style="border-left: 3px solid #1565c0;<%= _catHidden ? ' opacity: 0.6;' : '' %>">
+                            <div class="card-header">
+                                <div class="drag-handle" onclick="event.stopPropagation();" title="اسحب لتغيير الترتيب">
+                                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                                <div class="card-type-icon products" style="background: #e3f2fd; color: #1565c0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg></div>
+                                <span class="card-type-label" style="color: #1565c0;">Categories</span>
+                                <span class="card-title">التصنيفات الدائرية</span>
+                                <div class="card-actions" onclick="event.stopPropagation();">
+                                    <% if (_catHidden) { %>
+                                        <span style="font-size:11px;color:#c62828;font-weight:600;background:#ffebee;padding:2px 8px;border-radius:4px;">Hidden</span>
+                                    <% } %>
+                                    <button type="button" class="card-action-btn" title="<%= _catHidden ? 'إظهار' : 'إخفاء' %>" onclick="toggleCategoriesVisibility(this)">
+                                        <svg viewBox="0 0 24 24"><% if (!_catHidden) { %><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/><% } else { %><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/><% } %></svg>
+                                    </button>
+                                    <button type="button" class="card-action-btn danger" title="حذف" onclick="deleteCategoriesSection(this)">
+                                        <svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <% } %>
                         <div class="section-card" data-id="<%= col.id %>" draggable="true">
                             <div class="card-header" onclick="toggleCard(this)">
                                 <div class="drag-handle" onclick="event.stopPropagation();" title="Drag to change order">
@@ -931,11 +1021,30 @@
                             </div>
                         </div>
                     <% }); %>
+                    <% if (!_catInserted) { _catInserted = true; %>
+                    <!-- Categories (Circular) — at end -->
+                    <div class="section-card" data-id="categories" draggable="true" style="border-left: 3px solid #1565c0;">
+                        <div class="card-header">
+                            <div class="drag-handle" onclick="event.stopPropagation();" title="اسحب لتغيير الترتيب">
+                                <span></span><span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                            <div class="card-type-icon products" style="background: #e3f2fd; color: #1565c0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg></div>
+                            <span class="card-type-label" style="color: #1565c0;">Categories</span>
+                            <span class="card-title">التصنيفات الدائرية</span>
+                        </div>
+                    </div>
+                    <% } %>
                 <% } else { %>
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📦</div>
-                        <p>No sections yet</p>
-                        <p style="margin-top: 8px;">Click "Add card" to start building your homepage</p>
+                    <!-- Categories (Circular) — shown even when no collections -->
+                    <div class="section-card" data-id="categories" draggable="true" style="border-left: 3px solid #1565c0;">
+                        <div class="card-header">
+                            <div class="drag-handle" onclick="event.stopPropagation();" title="اسحب لتغيير الترتيب">
+                                <span></span><span></span><span></span><span></span><span></span><span></span>
+                            </div>
+                            <div class="card-type-icon products" style="background: #e3f2fd; color: #1565c0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l-5.5 9h11L12 2zm0 3.84L13.93 9h-3.87L12 5.84zM17.5 13c-2.49 0-4.5 2.01-4.5 4.5s2.01 4.5 4.5 4.5 4.5-2.01 4.5-4.5-2.01-4.5-4.5-4.5zm0 7c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zM3 21.5h8v-8H3v8zm2-6h4v4H5v-4z"/></svg></div>
+                            <span class="card-type-label" style="color: #1565c0;">Categories</span>
+                            <span class="card-title">التصنيفات الدائرية</span>
+                        </div>
                     </div>
                 <% } %>
             </div>
@@ -1055,11 +1164,37 @@
         function saveOrder() {
             var cards = document.querySelectorAll('.section-card');
             var order = [];
-            cards.forEach(function(c) { order.push(parseInt(c.dataset.id)); });
+            cards.forEach(function(c) {
+                var id = c.dataset.id;
+                order.push(id === 'categories' ? 'categories' : parseInt(id));
+            });
             fetch('/admin/collections/reorder', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ order: order })
+            });
+        }
+
+        // --- Categories visibility ---
+        function toggleCategoriesVisibility(btn) {
+            var card = btn.closest('.section-card');
+            var isCurrentlyHidden = card.style.opacity === '0.6';
+            fetch('/admin/settings/categories-visibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hidden: !isCurrentlyHidden })
+            }).then(function() { location.reload(); });
+        }
+        function deleteCategoriesSection(btn) {
+            if (!confirm('حذف قسم التصنيفات من الصفحة الرئيسية؟')) return;
+            fetch('/admin/settings/categories-visibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hidden: true })
+            }).then(function() {
+                var card = btn.closest('.section-card');
+                card.remove();
+                saveOrder();
             });
         }
 
@@ -1378,6 +1513,7 @@
                 else alert(data.error || 'حدث خطأ');
             });
         }
+
     </script>
 </body>
 </html>

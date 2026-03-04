@@ -2,7 +2,7 @@
    Moroccan Luxury E-Commerce — Main JS
    ============================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
+function _initAll() {
   initScrollAnimations();
   initNavbarScroll();
   initCheckoutForm();
@@ -21,10 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
   initImageProtection();
   initReviewImageSliders();
   initGlobalLightbox();
-});
+}
+
+// Initial page load
+document.addEventListener('DOMContentLoaded', _initAll);
+
+// Re-initialize on Turbo SPA navigations (turbo:load also fires on first load, so skip it)
+(function() {
+  var firstLoad = true;
+  document.addEventListener('turbo:load', function() {
+    if (firstLoad) { firstLoad = false; return; }
+    _initAll();
+  });
+})();
 
 /* --- Image Protection --- */
 function initImageProtection() {
+  if (initImageProtection._done) return;
+  initImageProtection._done = true;
   // Disable right-click on images
   document.addEventListener('contextmenu', function(e) {
     if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
@@ -60,6 +74,8 @@ function initScrollAnimations() {
 
 /* --- Navbar Scroll Effect --- */
 function initNavbarScroll() {
+  if (initNavbarScroll._done) return;
+  initNavbarScroll._done = true;
   const navbar = document.querySelector('.navbar');
   if (!navbar) return;
 
@@ -1209,42 +1225,53 @@ function initReviewImageSliders() {
 
 /* --- Global Lightbox for Review Images --- */
 function initGlobalLightbox() {
-  if (document.getElementById('globalLightbox')) return;
-
-  var style = document.createElement('style');
-  style.textContent = '.gl-lightbox{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;}.gl-lightbox.active{display:flex;}.gl-lightbox img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;}.gl-lightbox__close{position:absolute;top:16px;right:16px;width:40px;height:40px;background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;transition:background 0.2s;}.gl-lightbox__close:hover{background:rgba(255,255,255,0.4);}';
-  document.head.appendChild(style);
-
-  var lb = document.createElement('div');
-  lb.className = 'gl-lightbox';
-  lb.id = 'globalLightbox';
-  lb.innerHTML = '<button type="button" class="gl-lightbox__close" id="glClose">\u2715</button><img id="glImg" src="" alt="">';
-  document.body.appendChild(lb);
-
-  lb.addEventListener('click', function(e) {
-    if (e.target === lb || e.target.id === 'glClose') {
-      lb.classList.remove('active');
-      document.body.style.overflow = '';
+  // Recreate lightbox element if it was removed (Turbo replaces body)
+  if (!document.getElementById('globalLightbox')) {
+    if (!initGlobalLightbox._styleAdded) {
+      var style = document.createElement('style');
+      style.textContent = '.gl-lightbox{display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;}.gl-lightbox.active{display:flex;}.gl-lightbox img{max-width:90vw;max-height:85vh;object-fit:contain;border-radius:8px;}.gl-lightbox__close{position:absolute;top:16px;right:16px;width:40px;height:40px;background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:50%;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:1;transition:background 0.2s;}.gl-lightbox__close:hover{background:rgba(255,255,255,0.4);}';
+      document.head.appendChild(style);
+      initGlobalLightbox._styleAdded = true;
     }
-  });
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && lb.classList.contains('active')) {
-      lb.classList.remove('active');
-      document.body.style.overflow = '';
-    }
-  });
 
-  var selectors = '.prv-card__imgs img, .hrv-card__imgs img, .lp-rv-card__imgs img, .rv-card__images img';
-  document.addEventListener('click', function(e) {
-    var img = e.target;
-    if (img.tagName !== 'IMG') return;
-    if (!img.matches(selectors)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    document.getElementById('glImg').src = img.src;
-    lb.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  });
+    var lb = document.createElement('div');
+    lb.className = 'gl-lightbox';
+    lb.id = 'globalLightbox';
+    lb.innerHTML = '<button type="button" class="gl-lightbox__close" id="glClose">\u2715</button><img id="glImg" src="" alt="">';
+    document.body.appendChild(lb);
+
+    lb.addEventListener('click', function(e) {
+      if (e.target === lb || e.target.id === 'glClose') {
+        lb.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // Document-level listeners only once (they use getElementById so always find current element)
+  if (!initGlobalLightbox._docListeners) {
+    initGlobalLightbox._docListeners = true;
+    document.addEventListener('keydown', function(e) {
+      var lb = document.getElementById('globalLightbox');
+      if (e.key === 'Escape' && lb && lb.classList.contains('active')) {
+        lb.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+
+    var selectors = '.prv-card__imgs img, .hrv-card__imgs img, .lp-rv-card__imgs img, .rv-card__images img';
+    document.addEventListener('click', function(e) {
+      var img = e.target;
+      if (img.tagName !== 'IMG') return;
+      if (!img.matches(selectors)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('glImg').src = img.src;
+      var currentLb = document.getElementById('globalLightbox');
+      if (currentLb) currentLb.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+  }
 }
 
 function openLightbox(src) {

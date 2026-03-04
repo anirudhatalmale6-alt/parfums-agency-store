@@ -1111,8 +1111,37 @@ router.get('/feedback', (req, res) => {
     reviews,
     avgRating: avgRow && avgRow.avg ? avgRow.avg.toFixed(1) : '5.0',
     reviewCount: avgRow ? avgRow.count : 0,
-    ratingDist
+    ratingDist,
+    products: db.prepare('SELECT id, title FROM products WHERE is_active = 1 ORDER BY title').all()
   });
+});
+
+// Submit feedback from the feedback page
+router.post('/feedback', reviewUpload.fields([
+  { name: 'images', maxCount: 3 },
+  { name: 'audio', maxCount: 1 }
+]), (req, res) => {
+  try {
+    const { name, phone, rating, message, product_id } = req.body;
+    const imageFiles = (req.files && req.files.images) || [];
+    const hasImages = imageFiles.length > 0;
+    const hasAudio = req.files && req.files.audio && req.files.audio.length > 0;
+    const hasMessage = message && message.trim();
+    if (!hasMessage && !hasImages && !hasAudio) {
+      return res.status(400).json({ error: 'يرجى إضافة نص أو صورة أو تعليق صوتي على الأقل' });
+    }
+    let imageFile = '';
+    if (hasImages) {
+      imageFile = imageFiles.length === 1 ? imageFiles[0].filename : JSON.stringify(imageFiles.map(f => f.filename));
+    }
+    const audioFile = hasAudio ? req.files.audio[0].filename : '';
+    const prodId = product_id ? parseInt(product_id) : null;
+    db.prepare('INSERT INTO reviews (product_id, name, phone, rating, message, image_filename, audio_filename, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(prodId, name, phone || '', parseInt(rating) || 5, message || '', imageFile, audioFile, 'pending');
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Feedback submit error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 

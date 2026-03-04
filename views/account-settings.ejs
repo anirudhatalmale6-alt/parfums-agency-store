@@ -10,20 +10,24 @@
   <!-- Navbar -->
   <nav class="navbar scrolled">
     <div class="container">
-      <div class="navbar__inner">
-        <div class="navbar__brand">
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: empty spacer -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
           <a href="/" style="display: flex; align-items: center; gap: 10px;">
             <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
             <% } else { %>
               <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
               <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
             <% } %>
           </a>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <a href="/account" style="color: var(--color-text); font-size: 14px; text-decoration: none;">← لوحة التحكم</a>
-          <a href="/logout" class="navbar__cta" style="font-size: 13px; padding: 8px 16px; background: var(--color-error);">تسجيل الخروج</a>
+        <!-- Right: Home (always right) -->
+        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
+          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="الرئيسية">🏠</a>
         </div>
       </div>
     </div>

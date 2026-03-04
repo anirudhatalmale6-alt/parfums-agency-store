@@ -153,7 +153,7 @@
                             <input type="hidden" name="content_ar" id="content_ar_hidden">
                         </div>
                     </div>
-                    <div class="tab-content" id="tab-fr">
+                    <div class="tab-content" id="tab-fr" dir="ltr" style="direction: ltr; text-align: left;">
                         <div class="form-group">
                             <div id="editor_fr"></div>
                             <input type="hidden" name="content_fr" id="content_fr_hidden">
@@ -282,6 +282,9 @@
     document.querySelector('#editor_fr .ql-editor').classList.add('ltr');
     document.querySelector('#editor_fr .ql-editor').style.direction = 'ltr';
     document.querySelector('#editor_fr .ql-editor').style.textAlign = 'left';
+    // Also set toolbar LTR for French editor
+    var frToolbar = document.querySelector('#tab-fr .ql-toolbar');
+    if (frToolbar) { frToolbar.style.direction = 'ltr'; frToolbar.style.textAlign = 'left'; }
 
     // Load existing content
     <% if (page && page.content_ar) { %>

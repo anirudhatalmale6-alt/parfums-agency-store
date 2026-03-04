@@ -10,32 +10,24 @@
   <!-- Navbar -->
   <nav class="navbar scrolled">
     <div class="container">
-      <div class="navbar__inner">
-        <div class="navbar__brand">
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: empty spacer -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
           <a href="/" style="display: flex; align-items: center; gap: 10px;">
             <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
             <% } else { %>
               <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
               <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
             <% } %>
           </a>
         </div>
-        <div class="checkout-header__steps">
-          <div class="checkout-header__step checkout-header__step--active">
-            <span class="checkout-header__step-num">1</span>
-            <span><%= t('info') %></span>
-          </div>
-          <span class="checkout-header__step-arrow">←</span>
-          <div class="checkout-header__step">
-            <span class="checkout-header__step-num">2</span>
-            <span><%= t('payment') %></span>
-          </div>
-          <span class="checkout-header__step-arrow">←</span>
-          <div class="checkout-header__step">
-            <span class="checkout-header__step-num">3</span>
-            <span><%= t('confirmation') %></span>
-          </div>
+        <!-- Right: Home (always right) -->
+        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
+          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('home') %>">🏠</a>
         </div>
       </div>
     </div>

@@ -63,31 +63,44 @@
   <!-- Navbar -->
   <nav class="navbar scrolled">
     <div class="container">
-      <div class="navbar__inner">
-        <div class="navbar__brand">
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: Menu -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
+          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
+          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
+          <% } %>
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
           <a href="/" style="display: flex; align-items: center; gap: 10px;">
             <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
             <% } else { %>
               <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
               <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
             <% } %>
           </a>
         </div>
+        <!-- Right: Search + Cart (always right) -->
         <div style="display: flex; align-items: center; gap: 12px;">
           <a href="/search" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('search') %>">🔍</a>
           <a href="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'javascript:void(0)' : '/cart' %>" id="cartLink" onclick="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'openCartDrawer();return false;' : '' %>" style="position: relative; font-size: 22px; color: var(--color-text); text-decoration: none;">🛒<span id="cartBadge" style="position: absolute; top: -8px; right: -8px; background: var(--color-error); color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 50%; display: <%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'flex' : 'none' %>; align-items: center; justify-content: center;"><%= (typeof cartCount !== 'undefined' && cartCount > 0) ? cartCount : '0' %></span></a>
-          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
-          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
-          <% } %>
         </div>
       </div>
     </div>
   </nav>
+  <!-- Spacer for fixed navbar -->
+  <div style="height: 72px;"></div>
+
+  <%
+    var _hasCats = (typeof categories !== 'undefined' && categories.length > 0 && !(typeof categoriesHidden !== 'undefined' && categoriesHidden));
+    var _catSortOrder = (typeof categoriesSortOrder !== 'undefined') ? categoriesSortOrder : 0;
+    var _catRendered = false;
+  %>
 
   <!-- Image Slider -->
   <% if (typeof sliders !== 'undefined' && sliders && sliders.length > 0) { %>
-  <section class="home-slider" style="position: relative; overflow: hidden; margin-top: 60px;">
+  <section class="home-slider" style="position: relative; overflow: hidden;">
     <div class="slider-container" id="sliderContainer" style="display: flex; transition: transform 0.5s ease; width: <%= sliders.length * 100 %>%;">
       <% sliders.forEach(function(slide) { %>
         <div class="slider-slide" style="flex: 0 0 <%= 100 / sliders.length %>%; position: relative;">
@@ -118,35 +131,34 @@
   </section>
   <% } %>
 
-  <!-- Categories Section -->
-  <% if (typeof categories !== 'undefined' && categories.length > 0) { %>
-  <section style="padding: 20px 0 10px; <%= (typeof sliders === 'undefined' || !sliders || sliders.length === 0) ? 'margin-top: 60px;' : '' %>">
-    <div class="container">
-      <div style="display: flex; overflow-x: auto; gap: 16px; padding: 4px 0; -webkit-overflow-scrolling: touch;">
-        <% categories.forEach(function(cat) { %>
-          <a href="/category/<%= cat.slug %>" style="text-decoration: none; flex: 0 0 auto; text-align: center; width: 100px;">
-            <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; margin: 0 auto 8px; border: 2px solid var(--color-border); background: var(--color-bg-warm);">
-              <% if (cat.image_filename) { %>
-                <img src="/uploads/categories/<%= cat.image_filename %>" alt="<%= cat.name %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
-              <% } else { %>
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px;">&#x1F4E6;</div>
-              <% } %>
-            </div>
-            <span style="font-size: 13px; font-weight: 600; color: var(--color-text); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= cat.name %></span>
-          </a>
-        <% }); %>
-      </div>
-    </div>
-  </section>
-  <% } %>
-
   <% if (typeof useCollections !== 'undefined' && useCollections && collections.length > 0) { %>
     <!-- ===== COLLECTIONS-BASED HOME PAGE ===== -->
     <%
       var noSliderNoCat = (typeof sliders === 'undefined' || !sliders || sliders.length === 0) && (typeof categories === 'undefined' || categories.length === 0);
       var firstCollection = true;
     %>
-    <% collections.forEach(function(col) { %>
+    <% collections.forEach(function(col, _colIdx) { %>
+      <%/* Render circular categories at their sort_order position */%>
+      <% if (!_catRendered && _hasCats && _colIdx >= _catSortOrder) { _catRendered = true; %>
+      <section style="padding: 20px 0 10px;">
+        <div class="container">
+          <div style="display: flex; overflow-x: auto; gap: 16px; padding: 4px 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-content: center;">
+            <% categories.forEach(function(cat) { %>
+              <a href="/category/<%= cat.slug %>" style="text-decoration: none; flex: 0 0 auto; text-align: center; width: 100px;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; margin: 0 auto 8px; border: 2px solid var(--color-border); background: var(--color-bg-warm);">
+                  <% if (cat.image_filename) { %>
+                    <img src="/uploads/categories/<%= cat.image_filename %>" alt="<%= cat.name %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                  <% } else { %>
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px;">&#x1F4E6;</div>
+                  <% } %>
+                </div>
+                <span style="font-size: 13px; font-weight: 600; color: var(--color-text); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= cat.name %></span>
+              </a>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+      <% } %>
       <% if (col.section_type === 'feedback' && col.feedbackReviews && col.feedbackReviews.length > 0) { %>
       <!-- Feedback Section (from Collections) -->
       <section style="padding: 40px 0 50px; background: var(--color-bg-warm);">
@@ -394,7 +406,7 @@
       <% firstCollection = false; %>
       <% } else if (col.section_type === 'banner' && col.banner_desktop_image) { %>
       <!-- Banner Section -->
-      <section class="collection-section" <% if (firstCollection && noSliderNoCat) { %>style="margin-top: 60px;"<% } %>>
+      <section class="collection-section">
         <div class="container">
           <% if (col.show_title) { %>
           <div class="collection-header">
@@ -413,7 +425,7 @@
       </section>
       <% firstCollection = false; %>
       <% } else if (col.products && col.products.length > 0) { %>
-      <section class="collection-section" <% if (firstCollection && noSliderNoCat) { %>style="margin-top: 60px;"<% } %>>
+      <section class="collection-section">
         <div class="container">
           <% if (col.show_title) { %>
           <div class="collection-header">
@@ -537,6 +549,28 @@
       </section>
       <% firstCollection = false; } %>
     <% }); %>
+
+    <%/* Render categories at end if not yet rendered */%>
+    <% if (!_catRendered && _hasCats) { _catRendered = true; %>
+    <section style="padding: 20px 0 10px;">
+      <div class="container">
+        <div style="display: flex; overflow-x: auto; gap: 16px; padding: 4px 0; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-content: center;">
+          <% categories.forEach(function(cat) { %>
+            <a href="/category/<%= cat.slug %>" style="text-decoration: none; flex: 0 0 auto; text-align: center; width: 100px;">
+              <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; margin: 0 auto 8px; border: 2px solid var(--color-border); background: var(--color-bg-warm);">
+                <% if (cat.image_filename) { %>
+                  <img src="/uploads/categories/<%= cat.image_filename %>" alt="<%= cat.name %>" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
+                <% } else { %>
+                  <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 28px;">&#x1F4E6;</div>
+                <% } %>
+              </div>
+              <span style="font-size: 13px; font-weight: 600; color: var(--color-text); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><%= cat.name %></span>
+            </a>
+          <% }); %>
+        </div>
+      </div>
+    </section>
+    <% } %>
 
   <% } else { %>
     <!-- ===== FALLBACK: Original all-products grid ===== -->

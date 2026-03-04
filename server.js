@@ -75,6 +75,10 @@ app.use((req, res, next) => {
     res.locals.customMetaTags = allSettings.custom_meta_tags || '';
     res.locals.desktopLogo = allSettings.desktop_logo || '';
     res.locals.mobileLogo = allSettings.mobile_logo || '';
+    res.locals.logoSize = allSettings.logo_size || '36';
+    res.locals.categoriesPosition = allSettings.categories_position || 'after_slider';
+    res.locals.categoriesSortOrder = parseInt(allSettings.categories_sort_order) || 0;
+    res.locals.categoriesHidden = allSettings.categories_hidden === '1';
 
     // Language / i18n
     const siteLang = allSettings.site_language || 'ar';

@@ -104,22 +104,27 @@
   <!-- Navbar (same as other pages) -->
   <nav class="navbar scrolled">
     <div class="container">
-      <div class="navbar__inner">
-        <div class="navbar__brand">
-          <a href="/" style="display: flex; align-items: center; gap: 10px;">
-            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
-            <% } else { %>
-              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : '' %></div>
-              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : '' %></span>
-            <% } %>
-          </a>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <a href="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'javascript:void(0)' : '/cart' %>" id="cartLink" onclick="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'openCartDrawer();return false;' : '' %>" style="position: relative; font-size: 22px; color: var(--color-text); text-decoration: none;">🛒<span id="cartBadge" style="position: absolute; top: -8px; right: -8px; background: var(--color-error, #e53935); color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 50%; display: <%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'flex' : 'none' %>; align-items: center; justify-content: center;"><%= (typeof cartCount !== 'undefined' && cartCount > 0) ? cartCount : '0' %></span></a>
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: Menu -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
           <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
           <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
           <% } %>
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
+          <a href="/" style="display: flex; align-items: center; gap: 10px;">
+            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
+            <% } else { %>
+              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
+              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
+            <% } %>
+          </a>
+        </div>
+        <!-- Right: Cart (always right) -->
+        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
+          <a href="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'javascript:void(0)' : '/cart' %>" id="cartLink" onclick="<%= (typeof cartMode !== 'undefined' && cartMode === 'drawer') ? 'openCartDrawer();return false;' : '' %>" style="position: relative; font-size: 22px; color: var(--color-text); text-decoration: none;">🛒<span id="cartBadge" style="position: absolute; top: -8px; right: -8px; background: var(--color-error, #e53935); color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 50%; display: <%= (typeof cartCount !== 'undefined' && cartCount > 0) ? 'flex' : 'none' %>; align-items: center; justify-content: center;"><%= (typeof cartCount !== 'undefined' && cartCount > 0) ? cartCount : '0' %></span></a>
         </div>
       </div>
     </div>

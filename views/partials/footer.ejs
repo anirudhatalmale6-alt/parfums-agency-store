@@ -452,6 +452,8 @@ function updateCartDrawerQty(itemId, newQty){
 <div id="announcementBarData" style="display:none;" data-text="<%- _annText.replace(/"/g, '&quot;') %>" data-bg="<%= _annBg %>" data-color="<%= _annColor %>" data-h="<%= _annH %>" data-mh="<%= _annMH %>" data-link="<%= _annLink %>" data-dir="<%= _annDir %>"></div>
 <script>
 (function(){
+  // Skip if announcement bar already exists (Turbo navigation)
+  if (document.getElementById('announcement-bar')) return;
   var d = document.getElementById('announcementBarData');
   if (!d) return;
   var text = d.getAttribute('data-text');
@@ -478,12 +480,8 @@ function updateCartDrawerQty(itemId, newQty){
     bar.textContent = text;
   }
   document.body.insertBefore(bar, document.body.firstChild);
-  // Push fixed navbar down
-  var nav = document.querySelector('.navbar');
-  if (nav) nav.style.top = height + 'px';
-  // Increase body padding-top to account for announcement bar
-  var currentPad = parseInt(window.getComputedStyle(document.body).paddingTop) || 0;
-  document.body.style.paddingTop = (currentPad + parseInt(height)) + 'px';
+  // Padding & navbar position handled by CSS in head.ejs (ann-bar-css block)
+  // Only add mobile responsive style for the bar itself
   var style = document.createElement('style');
   style.textContent = '@media(max-width:768px){#announcement-bar{height:' + mh + 'px !important;font-size:12px !important;}}';
   document.head.appendChild(style);

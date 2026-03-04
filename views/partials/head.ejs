@@ -109,3 +109,82 @@ body { background-color: var(--color-bg); color: var(--color-text); }
 <% if (typeof customMetaTags !== 'undefined' && customMetaTags) { %>
   <%- customMetaTags %>
 <% } %>
+
+<%/* Announcement bar layout pre-allocation (prevents flash on Turbo navigation) */%>
+<% if (typeof announcementEnabled !== 'undefined' && announcementEnabled) { %>
+<% var _preAnnH = typeof announcementHeight !== 'undefined' ? announcementHeight : '44'; %>
+<% var _preAnnMH = typeof announcementMobileHeight !== 'undefined' ? announcementMobileHeight : '40'; %>
+<style id="ann-bar-css">
+  body { padding-top: <%= _preAnnH %>px; }
+  .navbar { top: <%= _preAnnH %>px !important; }
+  @media (max-width: 768px) {
+    body { padding-top: <%= _preAnnMH %>px; }
+    .navbar { top: <%= _preAnnMH %>px !important; }
+  }
+</style>
+<% } %>
+
+<%/* Turbo Drive — SPA-like navigation without page reloads */%>
+<script>
+  // Turbo SPA compat: make DOMContentLoaded handlers re-fire on Turbo navigations.
+  // After initial load, DOMContentLoaded never fires again. This patch detects when
+  // new body scripts add DOMContentLoaded handlers (after Turbo replaces the body)
+  // and runs them immediately since the DOM is already ready.
+  (function() {
+    var domReady = false;
+    var origAdd = EventTarget.prototype.addEventListener;
+    origAdd.call(document, 'DOMContentLoaded', function() { domReady = true; });
+    EventTarget.prototype.addEventListener = function(type, fn, opts) {
+      if (this === document && type === 'DOMContentLoaded' && domReady) {
+        // Defer to next tick so Turbo finishes swapping the body first
+        setTimeout(function() { try { fn(); } catch(e) { console.warn('[Turbo compat]', e); } }, 0);
+        return;
+      }
+      return origAdd.call(this, type, fn, opts);
+    };
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-umd.js" data-turbo-track="reload"></script>
+<style>
+  .turbo-progress-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--color-primary, #000), var(--color-primary-dark, #333));
+    box-shadow: 0 0 8px var(--color-primary, #000);
+  }
+</style>
+<script>
+  // Disable Turbo entirely on admin pages
+  if (location.pathname.startsWith('/admin') && window.Turbo) {
+    Turbo.session.drive = false;
+  }
+  // Intercept navigation TO admin pages (from storefront)
+  document.addEventListener('turbo:before-visit', function(e) {
+    try {
+      var url = new URL(e.detail.url);
+      if (url.pathname.startsWith('/admin')) {
+        e.preventDefault();
+        window.location.href = e.detail.url;
+      }
+    } catch(err) {}
+  });
+  // Close drawers/sidebars before Turbo navigates away
+  document.addEventListener('turbo:before-render', function() {
+    if (typeof closeSidebar === 'function') try { closeSidebar(); } catch(e) {}
+    if (typeof closeCartDrawer === 'function') try { closeCartDrawer(); } catch(e) {}
+    document.body.style.overflow = '';
+  });
+  // Disable Turbo for forms with file uploads
+  document.addEventListener('turbo:before-fetch-request', function(e) {
+    var form = e.target;
+    if (form && form.tagName === 'FORM' && form.enctype === 'multipart/form-data') {
+      e.preventDefault();
+      form.submit();
+    }
+  });
+  // Track page views for analytics on Turbo navigation
+  document.addEventListener('turbo:load', function() {
+    if (typeof gtag === 'function') gtag('event', 'page_view', { page_path: location.pathname });
+    if (typeof fbq === 'function') fbq('track', 'PageView');
+    if (typeof ttq !== 'undefined' && ttq.page) ttq.page();
+  });
+</script>

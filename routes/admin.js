@@ -1106,7 +1106,7 @@ router.post('/settings/favicon', requireAdmin, settingsUpload.single('favicon'),
   res.redirect('/admin/settings?success=تم رفع أيقونة المتجر');
 });
 
-// Logo upload
+// Logo upload (now redirects to Design panel)
 const logoUpload = multer({ storage: settingsStorage, limits: { fileSize: 10 * 1024 * 1024 } });
 router.post('/settings/logo', requireAdmin, logoUpload.fields([
   { name: 'desktop_logo', maxCount: 1 },
@@ -1118,7 +1118,26 @@ router.post('/settings/logo', requireAdmin, logoUpload.fields([
   if (req.files && req.files.mobile_logo && req.files.mobile_logo[0]) {
     upsertSetting('mobile_logo', req.files.mobile_logo[0].filename);
   }
-  res.redirect('/admin/settings?success=تم رفع اللوجو بنجاح');
+  if (req.body.logo_size) {
+    upsertSetting('logo_size', req.body.logo_size);
+  }
+  const redirectTo = req.body._redirect || '/admin/collections';
+  res.redirect(redirectTo);
+});
+
+// Logo size + categories position (AJAX)
+router.post('/settings/design-extras', requireAdmin, (req, res) => {
+  const { logo_size, categories_position } = req.body;
+  if (logo_size) upsertSetting('logo_size', logo_size);
+  if (categories_position) upsertSetting('categories_position', categories_position);
+  res.json({ success: true });
+});
+
+// Categories visibility toggle (AJAX)
+router.post('/settings/categories-visibility', requireAdmin, (req, res) => {
+  const { hidden } = req.body;
+  upsertSetting('categories_hidden', hidden ? '1' : '');
+  res.json({ success: true });
 });
 
 // Tracking Pixels (GA, FB, TikTok) + custom meta tags
@@ -1357,10 +1376,14 @@ router.post('/collections/:id/delete', requireAdmin, (req, res) => {
 });
 
 router.post('/collections/reorder', requireAdmin, (req, res) => {
-  const { order } = req.body; // array of IDs
+  const { order } = req.body; // array of IDs (may include "categories" for circular categories card)
   if (Array.isArray(order)) {
     order.forEach((id, idx) => {
-      db.prepare('UPDATE collections SET sort_order = ? WHERE id = ?').run(idx, id);
+      if (id === 'categories') {
+        upsertSetting('categories_sort_order', String(idx));
+      } else {
+        db.prepare('UPDATE collections SET sort_order = ? WHERE id = ?').run(idx, parseInt(id));
+      }
     });
   }
   res.json({ success: true });

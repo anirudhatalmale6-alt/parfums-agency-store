@@ -9,23 +9,28 @@
 
   <nav class="navbar scrolled">
     <div class="container">
-      <div class="navbar__inner">
-        <div class="navbar__brand">
+      <div class="navbar__inner" style="display: flex; align-items: center; justify-content: space-between; position: relative; direction: ltr;">
+        <!-- Left: Menu -->
+        <div style="display: flex; align-items: center; gap: 12px; min-width: 44px;">
+          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
+          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
+          <% } %>
+        </div>
+        <!-- Center: Logo -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%);">
           <a href="/" style="display: flex; align-items: center; gap: 10px;">
             <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
+              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: <%= typeof logoSize !== 'undefined' && logoSize ? logoSize : '36' %>px; width: auto;">
             <% } else { %>
               <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
               <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
             <% } %>
           </a>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
+        <!-- Right: Search + Home (always right) -->
+        <div style="display: flex; align-items: center; gap: 12px; direction: ltr;">
           <a href="/search" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('search') %>">🔍</a>
-          <a href="/" class="navbar__cta"><%= t('home') %></a>
-          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
-          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
-          <% } %>
+          <a href="/" style="font-size: 20px; color: var(--color-text); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('home') %>">🏠</a>
         </div>
       </div>
     </div>

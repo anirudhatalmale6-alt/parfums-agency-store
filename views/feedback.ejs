@@ -47,72 +47,19 @@
     }
     .rv-card[dir="ltr"] { direction: ltr; text-align: left; }
     .rv-card[dir="rtl"] { direction: rtl; text-align: right; }
-    /* Header: avatar + name + verified */
-    .rv-card__header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    .rv-card__avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: var(--color-primary);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      font-weight: 700;
-      flex-shrink: 0;
-      text-transform: uppercase;
-    }
-    .rv-card__name-row {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .rv-card__name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--color-text);
-    }
-    .rv-card__verified {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
+    .rv-card__header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .rv-card__avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; flex-shrink: 0; text-transform: uppercase; }
+    .rv-card__name-row { display: flex; align-items: center; gap: 6px; }
+    .rv-card__name { font-size: 15px; font-weight: 700; color: var(--color-text); }
+    .rv-card__verified { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; flex-shrink: 0; }
     .rv-card__verified svg { width: 18px; height: 18px; }
-    /* Comment area */
     .rv-card__body { min-height: 32px; margin-bottom: 10px; }
     .rv-card__text { font-size: 14px; line-height: 1.7; color: var(--color-text-secondary); margin: 0; }
     .rv-card__audio { margin-top: 2px; }
-    /* Stars at bottom */
     .rv-card__stars { color: var(--color-star, #F5A623); font-size: 18px; letter-spacing: 2px; }
-    /* Image gallery within card */
-    .rv-card__images {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 12px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-    }
+    .rv-card__images { display: flex; gap: 10px; margin-bottom: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .rv-card__images::-webkit-scrollbar { display: none; }
-    .rv-card__images img {
-      width: 110px;
-      height: 110px;
-      object-fit: cover;
-      border-radius: 12px;
-      flex-shrink: 0;
-      cursor: pointer;
-      border: 1px solid var(--color-border-light);
-      transition: transform 0.2s;
-    }
+    .rv-card__images img { width: 110px; height: 110px; object-fit: cover; border-radius: 12px; flex-shrink: 0; cursor: pointer; border: 1px solid var(--color-border-light); transition: transform 0.2s; }
     .rv-card__images img:hover { transform: scale(1.05); }
     .rv-card__product { font-size: 12px; color: var(--color-text-muted); margin-top: 6px; }
 
@@ -142,30 +89,7 @@
 <body>
   <div class="pattern-overlay"></div>
 
-  <!-- Navbar -->
-  <nav class="navbar scrolled">
-    <div class="container">
-      <div class="navbar__inner">
-        <div class="navbar__brand">
-          <a href="/" style="display: flex; align-items: center; gap: 10px;">
-            <% if (typeof desktopLogo !== 'undefined' && desktopLogo) { %>
-              <img src="/uploads/settings/<%= desktopLogo %>" alt="" style="height: 36px; width: auto;">
-            <% } else { %>
-              <div class="navbar__logo"><%= typeof siteName !== 'undefined' ? siteName.charAt(0) : 'م' %></div>
-              <span class="navbar__name"><%= typeof siteName !== 'undefined' ? siteName : 'متجرنا' %></span>
-            <% } %>
-          </a>
-        </div>
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <a href="/search" style="font-size: 20px; color: var(--color-primary); text-decoration: none; opacity: 0.8; padding: 4px; line-height: 1;" title="<%= t('search') %>">🔍</a>
-          <a href="/" style="font-size: 14px; font-weight: 700; color: var(--color-primary); text-decoration: none;">🏠 <%= t('home') %></a>
-          <% if (typeof sidebarCategories !== 'undefined' && sidebarCategories && sidebarCategories.length > 0) { %>
-          <button type="button" onclick="openSidebar()" style="background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-primary); padding: 4px; line-height: 1; opacity: 0.8;" title="<%= t('menu') %>">☰</button>
-          <% } %>
-        </div>
-      </div>
-    </div>
-  </nav>
+  <%- include('partials/navbar', { scrolled: true }) %>
 
   <!-- Compact Hero -->
   <section class="fb-hero">
@@ -203,8 +127,88 @@
     </div>
   </section>
 
+  <!-- Toggle Button -->
+  <section style="padding: 8px 0 16px;">
+    <div class="container container--narrow" style="text-align: center;">
+      <button type="button" id="feedbackToggleBtn" class="btn btn--primary" onclick="toggleFeedbackView()" style="padding: 12px 32px; font-size: 15px; font-weight: 700; border-radius: 10px;">
+        <%= t('write_review') || 'Écrire un avis' %>
+      </button>
+    </div>
+  </section>
+
+  <!-- Submit Feedback Form (hidden by default) -->
+  <section id="feedbackFormSection" style="padding: 8px 0 24px; display: none;">
+    <div class="container container--narrow">
+      <div class="section-header animate-on-scroll">
+        <span class="section-header__label"><%= t('share_experience') || 'شاركنا تجربتك' %></span>
+        <h2 class="section-header__title"><%= t('we_love_hearing') || 'نحب نسمع رأيك' %></h2>
+        <div class="section-header__divider"></div>
+      </div>
+      <div class="feedback-card animate-on-scroll">
+        <form id="feedbackForm" class="feedback-form" action="/feedback" method="POST" enctype="multipart/form-data">
+          <div class="feedback-form__row">
+            <div class="form-group">
+              <input type="text" id="feedbackName" name="name" class="form-input" placeholder="<%= t('your_name') %> *" required>
+            </div>
+            <div class="form-group">
+              <input type="tel" id="feedbackPhone" name="phone" class="form-input" placeholder="<%= t('your_phone') || 'رقم الهاتف' %> *" required dir="ltr" style="text-align: left;">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="feedback-stars" id="feedbackStars">
+              <span class="feedback-star active" data-rating="1">★</span>
+              <span class="feedback-star active" data-rating="2">★</span>
+              <span class="feedback-star active" data-rating="3">★</span>
+              <span class="feedback-star active" data-rating="4">★</span>
+              <span class="feedback-star active" data-rating="5">★</span>
+            </div>
+            <input type="hidden" id="feedbackRating" name="rating" value="5">
+          </div>
+          <div class="form-group">
+            <textarea id="feedbackMessage" name="message" class="form-input form-textarea" placeholder="<%= t('your_review') || 'اكتب تجربتك...' %>" rows="3"></textarea>
+          </div>
+          <!-- Image Upload (up to 3) -->
+          <div class="form-group">
+            <div class="feedback-upload-zone" id="feedbackImageZone">
+              <div class="feedback-upload-zone__icon">📷</div>
+              <div class="feedback-upload-zone__text"><%= t('photos') || 'صور' %></div>
+              <div class="feedback-upload-zone__hint">JPG, PNG — Max 10MB</div>
+              <input type="file" id="feedbackImage" name="images" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*" multiple onchange="previewFeedbackImages(this)">
+            </div>
+            <div id="feedbackImagePreviews" style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;"></div>
+          </div>
+          <!-- Voice Recording -->
+          <div class="form-group">
+            <div class="voice-recorder" id="voiceRecorder">
+              <button type="button" class="voice-recorder__btn" id="voiceRecordBtn">
+                <span class="voice-recorder__icon">🎙️</span>
+                <span class="voice-recorder__label"><%= t('voice_note') || 'تسجيل صوتي' %></span>
+              </button>
+              <div class="voice-recorder__status" id="voiceStatus"></div>
+              <div class="voice-recorder__player" id="voicePlayer">
+                <audio id="voiceAudio" controls></audio>
+                <button type="button" class="voice-recorder__remove" id="voiceRemoveBtn"><%= t('delete_recording') || 'حذف التسجيل' %></button>
+              </div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn--primary" id="feedbackSubmitBtn" data-original-text="<%= t('submit_review') || 'إرسال التقييم' %>" data-sending-text="<%= t('sending_review') || 'جاري الإرسال...' %>">
+            <%= t('submit_review') || 'إرسال التقييم' %>
+          </button>
+          <p class="feedback-form__note"><%= t('review_moderation_note') || 'سيتم مراجعة تقييمك قبل النشر' %></p>
+        </form>
+        <!-- Success state -->
+        <div class="feedback-success" id="feedbackSuccess" style="display: none;">
+          <div class="feedback-success__icon">✅</div>
+          <h3 class="feedback-success__title"><%= t('thanks_for_review') || 'شكراً لك!' %></h3>
+          <p class="feedback-success__text"><%= t('review_submitted') || 'تم إرسال تقييمك وسيتم مراجعته قريباً' %></p>
+          <button type="button" class="btn btn--outline" onclick="resetFeedbackForm()"><%= t('send_another_review') || 'إرسال تقييم آخر' %></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Reviews List (single column) -->
-  <section class="fb-list">
+  <section class="fb-list" id="reviewsListSection">
     <div class="container container--narrow">
       <% if (reviews.length === 0) { %>
         <div style="text-align: center; padding: 30px 16px; color: var(--color-text-muted);">
@@ -282,6 +286,29 @@
   <%- include('partials/footer') %>
   <script src="/js/main.js"></script>
   <script>
+    // Toggle between reviews list and feedback form
+    var _feedbackFormVisible = false;
+    function toggleFeedbackView() {
+      _feedbackFormVisible = !_feedbackFormVisible;
+      var formSection = document.getElementById('feedbackFormSection');
+      var reviewsSection = document.getElementById('reviewsListSection');
+      var toggleBtn = document.getElementById('feedbackToggleBtn');
+      if (_feedbackFormVisible) {
+        formSection.style.display = '';
+        reviewsSection.style.display = 'none';
+        toggleBtn.textContent = '<%= t("back_to_reviews") || "Retour aux avis" %>';
+        toggleBtn.classList.remove('btn--primary');
+        toggleBtn.classList.add('btn--outline');
+        formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        formSection.style.display = 'none';
+        reviewsSection.style.display = '';
+        toggleBtn.textContent = '<%= t("write_review") || "Écrire un avis" %>';
+        toggleBtn.classList.remove('btn--outline');
+        toggleBtn.classList.add('btn--primary');
+      }
+    }
+
     function openLightbox(src) {
       document.getElementById('rvLightboxImg').src = src;
       document.getElementById('rvLightbox').classList.add('active');
@@ -290,6 +317,136 @@
     function closeLightbox() {
       document.getElementById('rvLightbox').classList.remove('active');
       document.body.style.overflow = '';
+    }
+
+    // Star rating (same as product page)
+    var feedbackStars = document.querySelectorAll('#feedbackStars .feedback-star');
+    var feedbackRating = document.getElementById('feedbackRating');
+    feedbackStars.forEach(function(star) {
+      star.addEventListener('click', function() {
+        var rating = parseInt(this.getAttribute('data-rating'));
+        feedbackRating.value = rating;
+        feedbackStars.forEach(function(s, i) {
+          if (i < rating) { s.classList.add('active'); s.textContent = '★'; }
+          else { s.classList.remove('active'); s.textContent = '☆'; }
+        });
+      });
+    });
+
+    // Image upload preview
+    function previewFeedbackImages(input) {
+      var container = document.getElementById('feedbackImagePreviews');
+      container.innerHTML = '';
+      if (input.files.length > 3) {
+        alert('<%= t("max_3_photos") || "الحد الأقصى 3 صور" %>');
+        input.value = '';
+        return;
+      }
+      Array.from(input.files).forEach(function(file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var img = document.createElement('img');
+          img.src = e.target.result;
+          img.style.cssText = 'width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--color-border-light);';
+          container.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // Voice recording
+    var mediaRecorder = null;
+    var audioChunks = [];
+    var voiceBlob = null;
+    var voiceRecordBtn = document.getElementById('voiceRecordBtn');
+    var voiceStatus = document.getElementById('voiceStatus');
+    var voicePlayer = document.getElementById('voicePlayer');
+    var voiceAudio = document.getElementById('voiceAudio');
+    var voiceRemoveBtn = document.getElementById('voiceRemoveBtn');
+
+    if (voiceRecordBtn) {
+      voiceRecordBtn.addEventListener('click', function() {
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          voiceRecordBtn.classList.remove('recording');
+          voiceStatus.textContent = '';
+          voiceStatus.classList.remove('recording');
+        } else {
+          navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream) {
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = function(e) { audioChunks.push(e.data); };
+            mediaRecorder.onstop = function() {
+              voiceBlob = new Blob(audioChunks, { type: 'audio/webm' });
+              voiceAudio.src = URL.createObjectURL(voiceBlob);
+              voicePlayer.classList.add('visible');
+              stream.getTracks().forEach(function(t) { t.stop(); });
+            };
+            mediaRecorder.start();
+            voiceRecordBtn.classList.add('recording');
+            voiceStatus.textContent = '<%= t("recording") || "جاري التسجيل..." %>';
+            voiceStatus.classList.add('recording');
+          }).catch(function() {
+            alert('<%= t("mic_permission_needed") || "يرجى السماح بالوصول للميكروفون" %>');
+          });
+        }
+      });
+    }
+
+    if (voiceRemoveBtn) {
+      voiceRemoveBtn.addEventListener('click', function() {
+        voiceBlob = null;
+        voiceAudio.src = '';
+        voicePlayer.classList.remove('visible');
+      });
+    }
+
+    // Submit feedback via AJAX
+    document.getElementById('feedbackForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      var form = this;
+      var btn = document.getElementById('feedbackSubmitBtn');
+      var fd = new FormData(form);
+
+      // Add voice recording if available
+      if (voiceBlob) {
+        fd.append('audio', voiceBlob, 'voice.webm');
+      }
+
+      btn.disabled = true;
+      btn.textContent = btn.getAttribute('data-sending-text');
+
+      fetch('/feedback', {
+        method: 'POST',
+        body: fd
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        btn.disabled = false;
+        btn.textContent = btn.getAttribute('data-original-text');
+        if (data.success) {
+          form.style.display = 'none';
+          document.getElementById('feedbackSuccess').style.display = 'block';
+        } else {
+          alert(data.error || 'حدث خطأ');
+        }
+      }).catch(function() {
+        btn.disabled = false;
+        btn.textContent = btn.getAttribute('data-original-text');
+        alert('حدث خطأ في الاتصال');
+      });
+    });
+
+    function resetFeedbackForm() {
+      var form = document.getElementById('feedbackForm');
+      form.reset();
+      form.style.display = '';
+      document.getElementById('feedbackSuccess').style.display = 'none';
+      document.getElementById('feedbackImagePreviews').innerHTML = '';
+      voiceBlob = null;
+      if (voiceAudio) voiceAudio.src = '';
+      if (voicePlayer) voicePlayer.classList.remove('visible');
+      // Reset stars to 5
+      feedbackStars.forEach(function(s) { s.classList.add('active'); s.textContent = '★'; });
+      feedbackRating.value = 5;
     }
   </script>
 </body>
