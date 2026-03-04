@@ -25,6 +25,7 @@
   var htc = typeof headerTextColor !== 'undefined' ? headerTextColor : '#000000';
   var fbgc = typeof footerBgColor !== 'undefined' ? footerBgColor : '#1a1a1a';
   var ftc = typeof footerTextColor !== 'undefined' ? footerTextColor : '#FFFFFF';
+  var brc = typeof borderColor !== 'undefined' ? borderColor : '#000000';
   var sac = typeof sliderArrowColor !== 'undefined' ? sliderArrowColor : '#333333';
   var sabgc = typeof sliderArrowBgColor !== 'undefined' ? sliderArrowBgColor : 'rgba(255,255,255,0.9)';
 %>
@@ -44,6 +45,7 @@
   --color-header-text: <%= htc %>;
   --color-footer-bg: <%= fbgc %>;
   --color-footer-text: <%= ftc %>;
+  --color-border: <%= brc %>;
   --color-slider-arrow: <%= sac %>;
   --color-slider-arrow-bg: <%= sabgc %>;
 }

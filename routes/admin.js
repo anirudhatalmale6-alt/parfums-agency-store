@@ -1021,6 +1021,7 @@ router.post('/settings/theme', requireAdmin, (req, res) => {
     ['header_text_color', req.body.header_text_color || '#000000'],
     ['footer_bg_color', req.body.footer_bg_color || '#1a1a1a'],
     ['footer_text_color', req.body.footer_text_color || '#FFFFFF'],
+    ['border_color', req.body.border_color || '#000000'],
     ['slider_arrow_color', req.body.slider_arrow_color || '#333333'],
     ['slider_arrow_bg_color', req.body.slider_arrow_bg_color_text || req.body.slider_arrow_bg_color || 'rgba(255,255,255,0.9)'],
   ];

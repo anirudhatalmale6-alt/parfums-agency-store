@@ -359,6 +359,15 @@
                                 <input type="text" id="tt_footertxt" value="<%= settings.footer_text_color || '#FFFFFF' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_footertxt').value=this.value; updatePreview()">
                             </div>
                         </div>
+                        <!-- Border Color -->
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>لون الحدود (Border)</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="color" name="border_color" id="tc_border" value="<%= settings.border_color || '#000000' %>" style="width: 50px; height: 38px; border: 2px solid #e8e0d8; border-radius: 8px; cursor: pointer;" onchange="document.getElementById('tt_border').value=this.value">
+                                <input type="text" id="tt_border" value="<%= settings.border_color || '#000000' %>" style="width: 90px; padding: 8px; border: 2px solid #e8e0d8; border-radius: 8px; font-size: 13px; direction: ltr; text-align: center; font-family: monospace;" onchange="document.getElementById('tc_border').value=this.value">
+                            </div>
+                            <div class="hint">لون الحدود والفواصل في الموقع</div>
+                        </div>
                         <!-- Slider Arrow Color -->
                         <div class="form-group" style="margin-bottom: 0;">
                             <label>لون أسهم السلايدر</label>
